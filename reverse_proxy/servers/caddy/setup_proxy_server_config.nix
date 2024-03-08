@@ -3,7 +3,7 @@
 
   # Type
 
-  setupCaddyProxyServer :: { pkgs, [{dockerComposeFile = path; proxiedServiceInfo = {domainNameList = [string]; listeningPort = string; proxyNetwork = string; serviceName = string; upstreamHostName = string;};}], [string] } -> derivation
+  setupCaddyProxyServer :: { pkgs, [{dockerComposeFile = path; proxiedServiceInfo = {domainNameList = [string]; listeningPort = string; proxyNetwork = string; serviceName = string; serviceLabels = [string]; upstreamHostName = string;};}], [string] } -> derivation
 
 
   # Arguments
@@ -17,17 +17,22 @@
       - `dockerComposeFile`, path to a "docker-compose.yaml" file for the application -- Services defined in the compose file will be built & ran along with the reverse proxy service.
       - `proxiedServiceInfo`, network information for the proxied service (the application).
         - Should have the attributes:
+            - Labels for the proxied service
           - `domainNameList`:
             - List of domain names for which the traffic should be routed to the appplication service by the reverse proxy service.
             - Note:
               - Need to make sure that there is a public DNS record that points to the domains to this server.
                 - If get a `letsencrypt` error then a missing public DNS record is the likely cause.
+        - `serviceLabels`:
+          - Labels for the service.
+            - Note: The "reverse-proxy-component: 'proxied-service'" label is used to filter proxied service containers in the docker utility scripts.
     - Example:
       ```nix
       [
         {
           dockerComposeFile = ./docker-compose-file--for-application-1.yaml;
           proxiedServiceInfo = {
+            componentLabels = ["reverse-proxy-component: 'proxied-service'"];
             domainNameList = ["www.subsubdomain.subdomain.example.com" "subsubdomain.subdomain.example.com"];
             listeningPort = "8000";
             proxyNetwork = "caddy-proxy-internal-network;

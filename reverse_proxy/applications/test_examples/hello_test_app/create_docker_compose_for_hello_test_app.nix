@@ -11,6 +11,7 @@
       inherit proxyNetwork;
       serviceName = "hello-test-app";
       upstreamHostname = "hello-test-app";
+      serviceLabels = ["reverse-proxy-component: 'proxied-service'"];
     };
     dockerComposeFile = import <path to this file> {inherit pkgs; inherit proxiedServiceInfo};
   }
@@ -68,6 +69,9 @@ let
   };
 
 
+  proxiedServiceLabelConfigLines =
+    builtins.concatStringsSep "\n\ \ \ \ " proxiedServiceInfo.serviceLabels;
+
   # -- Create the compose file for the test app.
 
   dockerComposeFile = pkgs.writeText "docker-compose.yaml" ''
@@ -83,6 +87,8 @@ let
           - "8000:${proxiedServiceInfo.listeningPort}"
         networks:
           - ${proxiedServiceInfo.proxyNetwork}
+        labels:
+          ${proxiedServiceLabelConfigLines}
   '';
 in
 # -- Check listening port to make sure it's defined to be the one required for the app.

@@ -40,7 +40,7 @@ let
           context: .
           dockerfile: '${dockerFileCaddy}'
         labels:
-          webserver-component.proxy: 'caddy-proxy'
+          reverse-proxy-component: 'proxy-server'
         environment:
           CADDY_PATH_TO_JSON_CONFIG: /etc/caddy/caddy.json
         ports:

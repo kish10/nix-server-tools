@@ -20,7 +20,7 @@
     pkgs = nixpkgs.legacyPackages.${system};
 
     proxyNetwork = "caddy-proxy-internal-network";
-
+    serviceLabels = ["reverse-proxy-component: \"proxied-service\""];
 
     /**
       Obtain in the domainName through an enviroment variable as an example, but in practice it is better to put the domain name in the `proxiedServiceInfo` attribute directly.
@@ -42,6 +42,7 @@
           upstreamHostName = "hello-test-app";
           listeningPort = "80";
           inherit proxyNetwork;
+          inherit serviceLabels;
         };
         dockerComposeFile = import applications.applications.test_examples.hello_test_app.dockerComposeFile {
           inherit pkgs;

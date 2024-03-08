@@ -3,7 +3,7 @@
 
   # Types
 
-  createCaddyJson :: {pkgs, [{dockerComposeFile = path; proxiedServiceInfo = {domainNameList = [string]; listeningPort = string; proxyNetwork = string; serviceName = string; upstreamHostName = string;};}] } -> derivation
+  createCaddyJson :: {pkgs, [{dockerComposeFile = path; proxiedServiceInfo = {domainNameList = [string]; listeningPort = string; proxyNetwork = string; serviceLables = [string]; serviceName = string; upstreamHostName = string;};}] } -> derivation
 
 */
 

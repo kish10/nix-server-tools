@@ -3,7 +3,7 @@
 
   # Type
 
-  createRunDockerCompose :: {pkgs, path, [{dockerComposeFile = path; proxiedServiceInfo = {domainNameList = [string]; listeningPort = string; proxyNetwork = string; serviceName = string; upstreamHostName = string;};}], [string], [string]} -> derivation
+  createRunDockerCompose :: {pkgs, path, [{dockerComposeFile = path; proxiedServiceInfo = {domainNameList = [string]; listeningPort = string; proxyNetwork = string; serviceLabels = [string]; serviceName = string; upstreamHostName = string;};}], [string], [string]} -> derivation
 */
 
 {pkgs, dockerComposeForProxyServer, proxiedServices, externalVolumes}:
