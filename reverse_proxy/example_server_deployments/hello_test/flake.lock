@@ -1,0 +1,89 @@
+{
+  "nodes": {
+    "applications": {
+      "inputs": {
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1,
+        "narHash": "sha256-CrIW6HmQYv5Blx43pw163Sx7NcSFAuuo15cmpBAxCBo=",
+        "path": "../../applications",
+        "type": "path"
+      },
+      "original": {
+        "path": "../../applications",
+        "type": "path"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1709853099,
+        "narHash": "sha256-Te2K4Tp/FqAjEfNg7Y4cO3whG5quufENInhKtXNcGag=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "5f9689332a858cc682c23210479b61d9bdb014f9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1688392541,
+        "narHash": "sha256-lHrKvEkCPTUO+7tPfjIcb7Trk6k31rz18vkyqmkeJfY=",
+        "owner": "Nixos",
+        "repo": "nixpkgs",
+        "rev": "ea4c80b39be4c09702b0cb3b42eab59e2ba4f24b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Nixos",
+        "ref": "nixos-22.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_3": {
+      "locked": {
+        "lastModified": 1709853099,
+        "narHash": "sha256-Te2K4Tp/FqAjEfNg7Y4cO3whG5quufENInhKtXNcGag=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "5f9689332a858cc682c23210479b61d9bdb014f9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "proxyServers": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_3"
+      },
+      "locked": {
+        "lastModified": 1,
+        "narHash": "sha256-ozZ8ZKApCct++qnw1VBT6z2oxhFbrbmdj8a90YCEdFg=",
+        "path": "../../servers",
+        "type": "path"
+      },
+      "original": {
+        "path": "../../servers",
+        "type": "path"
+      }
+    },
+    "root": {
+      "inputs": {
+        "applications": "applications",
+        "nixpkgs": "nixpkgs_2",
+        "proxyServers": "proxyServers"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

@@ -1,0 +1,92 @@
+# Reference:
+# - http://EditorConfig.org
+# - https://github.com/NixOS/nixpkgs/blob/master/.editorconfig
+
+# Top-most EditorConfig file
+root = true
+
+
+# -- start: .editorconfig for general Unix files
+
+# Unix-style newlines with a newline ending every file, utf-8 charset
+[*]
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+charset = utf-8
+
+# Ignore diffs/patches
+[*.{diff,patch}]
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+
+# We want readFile .version to return the version without a newline.
+[.version]
+insert_final_newline = false
+
+# -- end: .editorconfig for general Unix files
+
+
+# -- start: .editorconfig for file indents
+
+# Match ex/exs/json/lockfiles/markdown/nix/perl/python/ruby/shell/docbook/yaml/yml files, set indent to spaces
+[*.{ex,exs,heex,js,json,lock,md,nix,pl,pm,py,rb,sh,xml,yaml,yml}]
+indent_style = space
+
+# Match docbook files, set indent width of one
+[*.xml]
+indent_size = 1
+
+# Match ex/exs/heex/js/json/lockfiles/markdown/nix/ruby files, set indent width of two
+[*.{ex,exs,heex,js,json,lock,md,nix,rb}]
+indent_size = 2
+
+# Match perl/python/shell/yaml/yml files, set indent width of four
+[*.{pl,pm,py,sh,yaml,yml}]
+indent_size = 4
+
+# Match gemfiles, set indent to spaces with width of two
+[Gemfile]
+indent_size = 2
+indent_style = space
+
+# -- end: .editorconfig for file indents
+
+
+# -- start: .editorconfig for files that requires specific configuration for newlines & line endings.
+
+# Disable file types or individual files
+# some of these files may be auto-generated and/or require significant changes
+
+[*.{c,h}]
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+
+[*.{asc,key,ovpn}]
+insert_final_newline = unset
+end_of_line = unset
+trim_trailing_whitespace = unset
+
+[*.lock]
+indent_size = unset
+
+# Although Markdown/CommonMark allows using two trailing spaces to denote
+# a hard line break, we do not use that feature in nixpkgs since
+# it forces the surrounding paragraph to become a <literallayout> which
+# does not wrap reasonably.
+# Instead of a hard line break, start a new paragraph by inserting a blank line.
+[*.md]
+trim_trailing_whitespace = true
+
+# binaries
+[*.nib]
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+charset = unset
+
+[eggs.nix]
+trim_trailing_whitespace = unset
+
+# -- start: .editorconfig for files that requires specific configuration for newlines & line endings.
