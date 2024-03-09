@@ -18,6 +18,7 @@ let
   setShellPromptWithUserHostDirSh = pkgs.writeScript "set_shell_prompot_with_user_host_dir.sh" ''
     #!/bin/sh
 
+    # - Change bash prompt
     export PS1="\[\e[0;32m\][(shell) \u@\H:\w]\$ \[\e[0m\]"
     '';
 in
