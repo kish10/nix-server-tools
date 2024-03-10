@@ -1,2 +1,2 @@
 # -- Ignore "result" folders that are the output of `nix-build`
-**/result*/
+**/result*
