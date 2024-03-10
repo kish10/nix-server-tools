@@ -2,11 +2,11 @@
 let
   sendEmailSh = {mailpaceSecretsEnvFilePath ? "/run/secrets/mailpace_secrets", emailSubject ? "$1", emailTextBody ? "$2"}:
     if builtins.isString mailpaceSecretsEnvFilePath then
-      pkgs.writeText "send_email.sh" ''
+      pkgs.writeScript "send_email.sh" ''
           #!/bin/sh
 
-          EMAIL_SUBJECT=${emailSubject}
-          EMAIL_TEXTBODY=${emailTextBody}
+          EMAIL_SUBJECT="${emailSubject}"
+          EMAIL_TEXTBODY="${emailTextBody}"
 
           # Should set the variables: MAILPACE_SERVER_TOKEN, EMAIL_FROM, EMAIL_TO
           source ${mailpaceSecretsEnvFilePath}
@@ -20,7 +20,7 @@ let
             \"from\": \"$EMAIL_FROM\",
             \"to\": \"$EMAIL_TO\",
             \"subject\": \"$EMAIL_SUBJECT\",
-            \"textbody\": \"$EMAIL_TEXTBODY`\"
+            \"textbody\": \"$EMAIL_TEXTBODY\"
           }"
         ''
     else

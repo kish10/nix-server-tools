@@ -58,27 +58,44 @@ let
     ];
 
 
-    errorEmail = {
-      enable = true;
 
-      sendErrorEmailSh =
-        let
-          mailpaceUtility = import ../../email/mailpace/mailpace_utility.nix {inherit pkgs;};
-          sendEmailSh = mailpaceUtility.scripts.sendEmailSh {
-            mailpaceSecretsEnvFilePath = "/run/secrets/mailpace_secrets";
-            emailSubject = "Backup job failed";
-            emailTextBody = "$1";
-          };
-        in
-        pkgs.writeText "send_error_email.sh" ''
-          #!/bin/sh
+    errorEmail =
+      let
+        mailpaceUtility = import ../../email/mailpace/mailpace_utility.nix {inherit pkgs;};
+      in
+      rec {
+        enable = true;
 
-          BORG_REPO=$1
-          BORG_SOURCE_DIRS=$2
+        sendEmailSh = mailpaceUtility.scripts.sendEmailSh {
+          mailpaceSecretsEnvFilePath = "/run/secrets/mailpace_secrets";
+          emailSubject = "$1";
+          emailTextBody = "$2";
+        };
 
-          ${sendEmailSh} "Backup job failed -- to Repo: `$BORG_REPO` -- on source dirs: `$BORG_SOURCE_DIRS`";
-        '';
-    };
+        sendErrorEmailSh =
+          pkgs.writeScript "send_error_email.sh" ''
+            #!/bin/sh
+
+            BORG_REPO="$1"
+            BORG_SOURCE_DIRS="$2"
+
+            /email/send_email.sh \
+              "Backup job failed" \
+              "Backup job failed -- to Repo: {  $BORG_REPO  } -- on source dirs: {  $BORG_SOURCE_DIRS  }"
+          '';
+
+        dockerContextDerivation = pkgs.stdenv.mkDerivation {
+          name="borgbackup_docker_context";
+          src=./.;
+          dontPatchShebangs = true;
+          installPhase = ''
+            mkdir $out
+
+            cp ${sendEmailSh} $out/send_email.sh
+            cp ${sendErrorEmailSh} $out/send_error_email.sh
+          '';
+        };
+      };
   };
 
 
@@ -86,9 +103,9 @@ let
 
 
   /**
-
+    Utility script to test whether backups were created.
   */
-  borgListBackupsSh = pkgs.writeText "borg_list_backups.sh" ''
+  borgListBackupsSh = pkgs.writeScript "borg_list_backups.sh" ''
     #!/bin/sh
 
 
@@ -115,11 +132,11 @@ let
     let
       sendErrorEmailCmd =
         if cfg.errorEmail.enable then
-          "( exec ${cfg.errorEmail.sendErrorEmailSh} \"$BORG_REPO\" \"$BORG_SOURCE_DIRS\" )"
+          "( exec /email/send_error_email.sh \"$BORG_REPO\" \"$BORG_SOURCE_DIRS\" )"
         else
           "";
     in
-    pkgs.writeText "borg_backup_prune_compact.sh" ''
+    pkgs.writeScript "borg_backup_prune_compact.sh" ''
       #!/bin/sh
 
       # Note:
@@ -214,7 +231,7 @@ let
     /**
       entry.sh file for the automatic backup Docker container.
     */
-    dockerEntrySh = pkgs.writeText "entry.sh" ''
+    dockerEntrySh = pkgs.writeScript "entry.sh" ''
       #!/bin/sh
 
       if [ "$1" = "bash" ] || [ "$1" = "sh" ] || [ "$1" = "/bin/bash" ] || [ "$1" = "/bin/sh" ]; then
@@ -236,44 +253,51 @@ let
   /**
     Dockerfile for the automatic borgbackup image.
   */
-  dockerFileForBorgBackup = pkgs.writeText "Dockerfile--for-borgbackup"
-  ''
-  ARG BASE_IMAGE_VERSION=latest
-  FROM alpine:$BASE_IMAGE_VERSION
+  dockerFileForBorgBackup = pkgs.writeText "Dockerfile--for-borgbackup" ''
+    ARG BASE_IMAGE_VERSION=latest
+    FROM alpine:$BASE_IMAGE_VERSION
 
-  # -- Install common dependencies
+    # -- Install common dependencies
 
-  RUN apk --no-cache add \
-    bash \
-    borgbackup \
-    curl \
-    openssh sshpass
-
-
-  # -- Install Supercronic
-
-  ENV SUPERCRONIC_VERSION="v0.2.28"
-  ENV SYSTEM="linux-386"
-
-  # Latest releases available at https://github.com/aptible/supercronic/releases
-  ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/$SUPERCRONIC_VERSION/supercronic-$SYSTEM \
-      SUPERCRONIC=supercronic-$SYSTEM \
-      SUPERCRONIC_SHA1SUM=6a37b4365698a0f83dc52ebcbad66a4ed1576369
-
-  RUN curl -fsSLO "$SUPERCRONIC_URL" \
-   && echo "''${SUPERCRONIC_SHA1SUM}  ''${SUPERCRONIC}" | sha1sum -c - \
-   && chmod +x "$SUPERCRONIC" \
-   && mv "$SUPERCRONIC" "/usr/local/bin/''${SUPERCRONIC}" \
-   && ln -s "/usr/local/bin/''${SUPERCRONIC}" /usr/local/bin/supercronic
+    RUN apk --no-cache add \
+      bash \
+      borgbackup \
+      curl \
+      openssh sshpass
 
 
-  # -- Copy runtime scripts
+    # -- Install Supercronic
 
-  COPY --chmod=700 entry.sh borg_backup_prune_compact.sh send_error_email.sh borg_list_backups.sh /
-  COPY borgbackup_crontab.txt /
+    ENV SUPERCRONIC_VERSION="v0.2.28"
+    ENV SYSTEM="linux-386"
+
+    # Latest releases available at https://github.com/aptible/supercronic/releases
+    ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/$SUPERCRONIC_VERSION/supercronic-$SYSTEM \
+        SUPERCRONIC=supercronic-$SYSTEM \
+        SUPERCRONIC_SHA1SUM=6a37b4365698a0f83dc52ebcbad66a4ed1576369
+
+    RUN curl -fsSLO "$SUPERCRONIC_URL" \
+     && echo "''${SUPERCRONIC_SHA1SUM}  ''${SUPERCRONIC}" | sha1sum -c - \
+     && chmod +x "$SUPERCRONIC" \
+     && mv "$SUPERCRONIC" "/usr/local/bin/''${SUPERCRONIC}" \
+     && ln -s "/usr/local/bin/''${SUPERCRONIC}" /usr/local/bin/supercronic
 
 
-  ENTRYPOINT ["/entry.sh"]
+    # -- Copy runtime scripts
+
+    COPY --chmod=700 \
+      entry.sh \
+      borg_backup_prune_compact.sh \
+      borg_list_backups.sh \
+      /
+
+    RUN mkdir /email/
+    copy --chmod=700 email/. /email/
+
+    COPY borgbackup_crontab.txt /
+
+
+    ENTRYPOINT ["/entry.sh"]
   '';
 
 
@@ -284,13 +308,20 @@ let
     let
       cpSendErrorEmailSh =
         if cfg.errorEmail.enable then
-          "cp ${cfg.errorEmail.sendErrorEmailSh} $out/send_error_email.sh"
+          ''
+          # -- Copy files for sending emails.
+
+          mkdir $out/email/
+
+          cp -r ${cfg.errorEmail.dockerContextDerivation}/. $out/email/.
+          ''
         else
           "";
     in
     pkgs.stdenv.mkDerivation {
       name="borgbackup_docker_context";
       src=./.;
+      dontPatchShebangs = true;
       installPhase = ''
         mkdir $out
 
@@ -299,6 +330,7 @@ let
         cp ${borgListBackupsSh} $out/borg_list_backups.sh
         cp ${dockerEntrySh} $out/entry.sh
         cp ${dockerFileForBorgBackup} $out/Dockerfile--for-borgbackup
+
         ${cpSendErrorEmailSh}
       '';
   };
