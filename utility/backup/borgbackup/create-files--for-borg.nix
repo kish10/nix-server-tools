@@ -8,10 +8,26 @@ let
 
     borgConfigPaths = {
       env = {
-        /** `borg.env` should `export`: "BORG_RSH", "BORG_REPO", optional: "BORG_ARCHIVE_PREFIX" */
+        /**
+          `borg.env` should `export`: "BORG_RSH", "BORG_REPO", optional: "BORG_ARCHIVE_PREFIX"
+
+          Example `borg.env`:
+          ```
+          export BORG_RSH="sshpass -f /run/secrets/borg_ssh_passphrase -P passphrase ssh -i /root/.ssh/storage_box_private_key -p <ssh port number>"
+          export BORG_REPO="ssh://user@storage_box_hostname:<ssh port number>/./<path to repo>"
+          export BORG_ARCHIVE_PREFIX="test_borg_archive"
+          ```
+        */
         borg_config_env = "${userHome}/borgbackup_config/borg.env";
 
-        /** `borg_secrets_end` should export: "BORG_PASSPHRASE" */
+        /**
+          `borg_secrets_env` should export: "BORG_PASSPHRASE"
+
+          Example `borg_secrets.env`:
+          ```
+          export BORG_PASSPHRASE="test"
+          ```
+        */
         borg_secrets_env = "${userHome}/secrets/borg_secrets.env";
       };
 
@@ -38,7 +54,7 @@ let
 
 
     additionalDockerBindPaths = [
-      "${userHome}/secrets/mailpace_secrets.env:/run_secrets/mailpace_secrets"
+      "${userHome}/secrets/mailpace_secrets.env:/run/secrets/mailpace_secrets"
     ];
 
 
@@ -54,7 +70,7 @@ let
             emailTextBody = "$1";
           };
         in
-        pkgs.writeScript "send_error_email.sh" ''
+        pkgs.writeText "send_error_email.sh" ''
           #!/bin/sh
 
           BORG_REPO=$1
@@ -70,20 +86,41 @@ let
 
 
   /**
+
+  */
+  borgListBackupsSh = pkgs.writeText "borg_list_backups.sh" ''
+    #!/bin/sh
+
+
+    # Note:
+    # - Should have: "BORG_RSH", "BORG_REPO"
+    # - Optional variable: "BORG_ARCHIVE_PREFIX"
+    source ''${BORG_ENV_FILE_PATH-/borg.env}
+
+    # Note:
+    # - Should have: "BORG_PASSPHRASE"
+    source ''${BORG_ENV_SECRETS_FILE_PATH-/run/secrets/borg_secrets}
+
+
+    borg list $BORG_REPO --pattern "+ $BORG_ARCHIVE_PREFIX--"
+  '';
+
+
+  /**
     Script called to {create, prune, compact} the borgbackup.
 
     Configured by the `borg.env` file.
   */
-  borgBackupScript =
+  borgBackupPruneCompactSh =
     let
       sendErrorEmailCmd =
         if cfg.errorEmail.enable then
-          "( ${cfg.errorEmail.sendErrorEmailSh} \"$BORG_REPO\" \"$BORG_SOURCE_DIRS\" )"
+          "( exec ${cfg.errorEmail.sendErrorEmailSh} \"$BORG_REPO\" \"$BORG_SOURCE_DIRS\" )"
         else
           "";
     in
-    pkgs.writeText "borgbackup_script.sh" ''
-      #!/bin/bash
+    pkgs.writeText "borg_backup_prune_compact.sh" ''
+      #!/bin/sh
 
       # Note:
       # - Should have: "BORG_RSH", "BORG_REPO"
@@ -112,7 +149,7 @@ let
         --exclude 'home/*/.cache/*'                       \
         --exclude 'var/tmp/*'                             \
                                                           \
-        $BORG_REPO::$BORG_ARCHIVE_PREFIX{hostname}-{now:%Y-%m-%dT%H:%M:%S.%f} \
+        $BORG_REPO::$BORG_ARCHIVE_PREFIX--{hostname}--{now:%Y-%m-%dT%H:%M:%S.%f} \
         $BORG_SOURCE_DIRS
 
       backup_exit=$?
@@ -170,7 +207,7 @@ let
     */
     borgbackupCrontab = pkgs.writeText "borgbackup_crontab.txt"
     ''
-    ${cfg.crontabSchedule} /borgbackup_script.sh 2>&1
+    ${cfg.crontabSchedule} /borg_backup_prune_compact.sh 2>&1
     '';
 
 
@@ -185,7 +222,7 @@ let
         exec "$@"
       else
         # -- Run the borgbackup script once in subshell.
-        ( exec /borgbackup_script.sh )
+        ( exec /borg_backup_prune_compact.sh )
 
         # -- Set up cron job for automatic backups
         supercronic /borgbackup_crontab.txt
@@ -232,7 +269,7 @@ let
 
   # -- Copy runtime scripts
 
-  COPY --chmod=700 entry.sh borgbackup_script.sh send_error_email.sh /
+  COPY --chmod=700 entry.sh borg_backup_prune_compact.sh send_error_email.sh borg_list_backups.sh /
   COPY borgbackup_crontab.txt /
 
 
@@ -258,7 +295,8 @@ let
         mkdir $out
 
         cp ${borgbackupCrontab} $out/borgbackup_crontab.txt
-        cp ${borgBackupScript} $out/borgbackup_script.sh
+        cp ${borgBackupPruneCompactSh} $out/borg_backup_prune_compact.sh
+        cp ${borgListBackupsSh} $out/borg_list_backups.sh
         cp ${dockerEntrySh} $out/entry.sh
         cp ${dockerFileForBorgBackup} $out/Dockerfile--for-borgbackup
         ${cpSendErrorEmailSh}
@@ -348,6 +386,13 @@ let
 
   /**
     Script to run an interactive container for testing.
+
+    To test:
+    - Run `nix-build <path to this file> --attr scripts
+    - Run `./result-4` Assuming that `result-4` is the `nix-build` output corresponding to this script.
+    - In the docker container:
+      - Run `./borg_backup_prune_compact.sh` to manually run a { "borg create" (backup), "borg prune", "borg compact"} commands.
+      - Run `./borg_list_backups.sh` to manually check that the backup command was ran succesfully (there should be an entry for the backup that was just manually ran.
   */
   runTestInteractiveContainerSh = pkgs.writeScript "run-test-interactive-docker-container.sh" ''
     #!/bin/sh
@@ -369,10 +414,12 @@ let
       -e BORG_SOURCE_DIRS="${makeInDockerSourcePaths cfg.borgConfigPaths.sourceData}" \
       -it test_borgbackup bash
   '';
+
 in
 {
   scripts = {
-    inherit borgBackupScript;
+    inherit borgBackupPruneCompactSh;
+    inherit borgListBackupsSh;
     inherit runComposeSh;
     inherit runTestInteractiveContainerSh;
   };
