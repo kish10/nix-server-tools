@@ -44,7 +44,7 @@ let
       abort ''
         The `secretPath` should be a string to a file not checked into the nix store.
 
-        If actually want to encrypt a file in the nix store, need to use string interpolation `"${secretPath}"`.
+        If actually want to encrypt a file in the nix store, need to use string interpolation `''"${secretPath}"`.
       '';
 
 
