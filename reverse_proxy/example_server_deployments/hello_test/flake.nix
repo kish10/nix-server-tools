@@ -27,7 +27,7 @@
 
 
     /**
-      Obtain in the domainName through an enviroment variable as an example, but in practice it is better to put the domain name in the `proxiedServiceInfo` attribute directly.
+      Obtain the domainName through an enviroment variable as an example, but in practice it is better to put the domain name in the `proxiedServiceInfo` attribute directly.
 
       Note:
       - Since this is a flake, the environment variable would not be read unless build with `nix build .#proxyServer --impure`.
