@@ -10,17 +10,21 @@
 
   inputs = {
     nixpkgs.url = "github:Nixos/nixpkgs/nixos-22.11";
-    proxyServers.url = "path:../../servers";
-    applications.url = "path:../../applications";
   };
 
-  outputs = {self, nixpkgs, proxyServers, applications}:
+  outputs = {self, nixpkgs}:
   let
     system = "x86_64-linux";
     pkgs = nixpkgs.legacyPackages.${system};
 
+
+    proxyServers = import ../../servers;
+    applications = import ../../applications;
+
+
     proxyNetwork = "caddy-proxy-internal-network";
     serviceLabels = ["reverse-proxy-component: \"proxied-service\""];
+
 
     /**
       Obtain in the domainName through an enviroment variable as an example, but in practice it is better to put the domain name in the `proxiedServiceInfo` attribute directly.
@@ -34,6 +38,8 @@
       in
       if domainNameHelloTestAppFromEnv != "" then domainNameHelloTestAppFromEnv else "hello.test.example.com";
 
+
+
     proxiedServices = [
       rec {
         proxiedServiceInfo = {
@@ -44,7 +50,7 @@
           inherit proxyNetwork;
           inherit serviceLabels;
         };
-        dockerComposeFile = import applications.applications.test_examples.hello_test_app.dockerComposeFile {
+        dockerComposeFile = import applications.testExamples.helloTestApp.dockerComposeFile {
           inherit pkgs;
           inherit proxiedServiceInfo;
         };
@@ -52,7 +58,7 @@
     ];
   in
   {
-    packages.${system}.proxyServer = import proxyServers.servers.caddy.proxyServer {
+    packages.${system}.proxyServer = import proxyServers.caddy.proxyServer {
       inherit pkgs;
       inherit proxiedServices;
       externalVolumes = [];
