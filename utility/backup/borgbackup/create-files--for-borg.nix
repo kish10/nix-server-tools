@@ -1,3 +1,18 @@
+/**
+  Creates files to work with `borgbackup`.
+
+  Note:
+  - To use need to do setup that is outside of these files:
+    - `borgbackup` setup:
+      - Set up a `borgbackup` "storage box" server where the files would be stored & these scripts will ssh into.
+      - Initialize the `borgbackup` repository with `borg init`.
+        - This command needs to have `borg` installed on the "storage box" server.
+          - So if can't install `borg` on the storage server, mount the server locally with `sshfs` & use the local `borg` installation to install `borg`.
+            - References: [Borgbackup docs - Quickstart - Remote repositories](https://borgbackup.readthedocs.io/en/stable/quickstart.html#remote-repositories)
+      - Create config & secret files, see below.
+
+  For more details on `borgbackup` see: [Borg Documentation](https://borgbackup.readthedocs.io/en/stable/index.html)
+*/
 {pkgs ? import <nixpkgs> {}, config ? {}}:
 let
   userHome = builtins.getEnv("HOME");
@@ -56,7 +71,6 @@ let
     additionalDockerBindPaths = [
       "${userHome}/secrets/mailpace_secrets.env:/run/secrets/mailpace_secrets"
     ];
-
 
 
     errorEmail =
@@ -222,9 +236,8 @@ let
     /**
       Crontab to automatically call borgbackup at scheduled times.
     */
-    borgbackupCrontab = pkgs.writeText "borgbackup_crontab.txt"
-    ''
-    ${cfg.crontabSchedule} /borg_backup_prune_compact.sh 2>&1
+    borgbackupCrontab = pkgs.writeText "borgbackup_crontab.txt" ''
+      ${cfg.crontabSchedule} /borg_backup_prune_compact.sh 2>&1
     '';
 
 
@@ -401,8 +414,7 @@ let
           - ${cfg.borgConfigPaths.ssh.ssh_server_key_passphrase}:/run/secrets/borg_ssh_passphrase:ro
           ${makeSourceDataConfigLines {sourceData = cfg.borgConfigPaths.sourceData;}}
           ${makeAdditionalDockerBindPathsConfigLines {additionalDockerBindPaths = cfg.additionalDockerBindPaths;}}
-          #- ''${a.mailpace_secrets_env}:/run/secrets/mailpace_secrets:ro
-          restart: unless-stopped
+        restart: unless-stopped
   '';
 
 
@@ -458,5 +470,5 @@ in
 
   dockerContext = dockerContextDerivation;
 
-  dockerCompose = dockerComposeForBorgBackup;
+  dockerComposeFile = dockerComposeForBorgBackup;
 }

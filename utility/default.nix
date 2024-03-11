@@ -1,18 +1,17 @@
-{pkgs ? import <nixpkgs> {}}:
 {
   backup = {
-    borgbackup = "";
+    borgbackup = ./backup/borgbackup/create-files--for-borg.nix;
   };
 
   email = {
-    mailpace = import ./email/mailpace/mailpace_utilities.nix {inherit pkgs;};
+    mailpace = ./email/mailpace/mailpace_utility.nix ;
   };
 
   encryption = {
-    age = import ./encryption/age_utilities.nix {inherit pkgs;};
+    age = ./encryption/age_utilities.nix;
   };
 
   shell = {
-    shellPrompt = import ./shell/shell_prompt_utility.nix {inherit pkgs;};
+    shellPrompt = ./shell/shell_prompt_utility.nix;
   };
 }

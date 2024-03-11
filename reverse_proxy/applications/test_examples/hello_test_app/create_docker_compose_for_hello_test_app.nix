@@ -74,7 +74,7 @@ let
 
   # -- Create the compose file for the test app.
 
-  dockerComposeFile = pkgs.writeText "docker-compose.yaml" ''
+  dockerComposeFile = pkgs.writeText "docker-compose--for-hello-test-app.yaml" ''
     version: "3.7"
 
     services:

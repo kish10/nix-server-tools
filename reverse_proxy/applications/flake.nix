@@ -3,7 +3,5 @@
     nixpkgs.url = "github:NixOS/nixpkgs";
   };
 
-  outputs = { self, nixpkgs, ... }: {
-    applications = import ./.;
-  };
+  outputs = { self, nixpkgs, ... }: import ./.;
 }

@@ -17,3 +17,11 @@ Note:
       - Ex: The outputs of `pkgs.writeScript`, but not the outputs of `pkgs.writeText`.
   - For example by default `pkgs.stdenv.mkDerivation` rewrites `#!/bin.sh` to `#!/nix/store/<hash>-some-bash/bin/sh`.
   - Reference: [NixOS - What is the `patchShebangs` command in Nix build expressions?](https://discourse.nixos.org/t/what-is-the-patchshebangs-command-in-nix-build-expressions/12656)
+
+
+### Using `builtins.getEnv` with Nix flake.
+
+To read environment variables from the shell context where `nix build .#<proxy>` is called:
+- Need to use `nix build .#<proxy> --impure` if using `builtins.getEnv("ENV_NAME")` in the Nix code that will be derived with the build call.
+    - Otherwise the environment variables would not be set, and the result of `builtins.getEnv("ENV_NAME")` would be `""`.
+    - Use `--impure` with caution.

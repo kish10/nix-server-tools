@@ -3,7 +3,6 @@
     nixpkgs.url = "github:NixOS/nixpkgs";
   };
 
-  outputs = { self, nixpkgs, ... }: {
-    servers = import ./.;
-  };
+  outputs = { self, nixpkgs, ... }: import ./.;
+
 }
