@@ -1,4 +1,3 @@
-{pkgs ? import <nixpkgs> {}}:
 /**
   Used in the `shellHook` attribute of a `pkgs.mkShell` derivation to set the shell prompt when For example `nix develop .#` is called.
 
@@ -6,6 +5,8 @@
   - How to fix "wrapping" issue when setting PS1 (see first answer to this answer): https://stackoverflow.com/a/342135
 
 */
+
+{pkgs ? import <nixpkgs> {}}:
 let
   /**
     Sets shell prompt to `[(shell) user@host:directory]$ `.

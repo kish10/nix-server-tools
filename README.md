@@ -19,9 +19,30 @@ Note:
   - Reference: [NixOS - What is the `patchShebangs` command in Nix build expressions?](https://discourse.nixos.org/t/what-is-the-patchshebangs-command-in-nix-build-expressions/12656)
 
 
-### Using `builtins.getEnv` with Nix flake.
+### Working with Nix Flakes
+
+#### Checking correctness of the flake.nix file & corresponding code (& build inputs), without building.
+
+`nix flake check`
+
+#### Updating the build inputs
+
+To get the latest versions of the build inputs can run `nix flake update` before `nix build .#`.
+
+#### Using `builtins.getEnv` with Nix flake.
 
 To read environment variables from the shell context where `nix build .#<proxy>` is called:
 - Need to use `nix build .#<proxy> --impure` if using `builtins.getEnv("ENV_NAME")` in the Nix code that will be derived with the build call.
     - Otherwise the environment variables would not be set, and the result of `builtins.getEnv("ENV_NAME")` would be `""`.
     - Use `--impure` with caution.
+
+#### Using local git repo as build inputs (usefull for quick prototyping during development).
+
+For the build input url can use: `git+file://<absolute path to the local git repo>`.
+
+Also see:
+- [Updating the build inputs](#updating-the-build-inputs)
+
+### Working with secrets.
+
+Nix automatically copies files into the nix-store. So recommend that secrets files should be encrypted anytime building with Nix such as `nix build .#` or `nix develop .#`, and the secret files should decrypted only when ecessary such as when running `docker compose up`.

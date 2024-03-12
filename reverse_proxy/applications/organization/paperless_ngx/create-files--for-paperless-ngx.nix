@@ -15,6 +15,8 @@
   config ? {}
 }:
 let
+  userHome = builtins.getEnv("HOME");
+
   options = {
 
     proxiedServiceInfo = {
@@ -33,6 +35,29 @@ let
       Note: `borgConfigPaths.sourceData` will be set below.
     */
     borgConfigList = [];
+
+
+    paperlessConfigPaths = {
+      env = {
+        /**
+          Path to env file with additional paperless-ngx enviroment variables
+
+          Format of the file should be the format required for Docker ".env" files.
+        */
+        paperlessConfigEnv = "";
+
+        /**
+          `paperlessSecretsEnv` should set: "PAPERLESS_SECRET_KEY"
+          `paperlessSecretsEnv` can optionally set: "PAPERLESS_ADMIN_MAIL", "PAPERLESS_ADMIN_PASSWORD"
+
+          Example `paperless-ngx_secrets.env`:
+          ```
+          PAPERLESS_SECRET_KEY=<key>
+          ```
+        */
+        paperlessSecretsEnv = "${userHome}/secrets/paperless-ngx_secrets.env";
+      };
+    };
   };
 
   cfg = options // config;
@@ -85,8 +110,22 @@ let
   proxiedServiceLabelConfigLines =
     builtins.concatStringsSep "\n\ \ \ \ " cfg.proxiedServiceInfo.serviceLabels;
 
-  paperlessUrlEnv =
-    builtins.concatStringsSep "," cfg.proxiedServiceInfo.domainNameList; #); #(map (d: "https://${d}")
+
+  paperlessUrlCsrfEnv =
+    let
+      withHttps = (map (d: "https://${d}") cfg.proxiedServiceInfo.domainNameList);
+    in
+    builtins.concatStringsSep "," withHttps;
+
+  paperlessUrlAllowedEnv =
+    builtins.concatStringsSep "," cfg.proxiedServiceInfo.domainNameList;
+
+
+  paperlessConfigEnvPath =
+    if cfg.paperlessConfigPaths.env.paperlessConfigEnv != "" then
+      "- ${cfg.paperlessConfigPaths.env.paperlessConfigEnv}"
+    else
+      "";
 
 
   dockerComposeFile = pkgs.writeText "docker-compose--for-paperless-ngx.yaml" ''
@@ -99,6 +138,8 @@ let
         image: docker.io/library/redis:7
         networks:
           - ${cfg.proxiedServiceInfo.serviceName}__paperless_internal
+        ports:
+          - "6379"
         restart: unless-stopped
         volumes:
           - ${cfg.proxiedServiceInfo.serviceName}__paperless_redisdata:/data
@@ -122,7 +163,8 @@ let
           - ${cfg.proxiedServiceInfo.serviceName}__paperless_consume:/usr/src/paperless/consume
 
         environment:
-          PAPERLESS_ALLOWED_HOSTS: ${paperlessUrlEnv}
+          PAPERLESS_CSRF_TRUSTED_ORIGINS: ${paperlessUrlCsrfEnv}
+          PAPERLESS_ALLOWED_HOSTS: ${paperlessUrlAllowedEnv}
           PAPERLESS_PORT: ${cfg.proxiedServiceInfo.listeningPort}
           PAPERLESS_USE_X_FORWARD_HOST: True
           PAPERLESS_USE_X_FORWARD_PORT: True
@@ -133,6 +175,9 @@ let
           PAPERLESS_TIKA_ENABLED: 1
           PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://${cfg.proxiedServiceInfo.serviceName}-gotenberg:3000
           PAPERLESS_TIKA_ENDPOINT: http://${cfg.proxiedServiceInfo.serviceName}-tika:9998
+        env_file:
+          - ${cfg.paperlessConfigPaths.env.paperlessSecretsEnv}
+          ${paperlessConfigEnvPath}
         labels:
           ${proxiedServiceLabelConfigLines}
 
@@ -149,12 +194,15 @@ let
           - "--chromium-allow-list=file:///tmp/.*"
         networks:
           - ${cfg.proxiedServiceInfo.serviceName}__paperless_internal
-
+        ports:
+          - "3000"
 
       ${cfg.proxiedServiceInfo.serviceName}-tika:
         image: ghcr.io/paperless-ngx/tika:latest
         networks:
           - ${cfg.proxiedServiceInfo.serviceName}__paperless_internal
+        ports:
+          - "9998"
         restart: unless-stopped
 
 
@@ -174,6 +222,8 @@ let
     networks:
       ${cfg.proxiedServiceInfo.serviceName}__paperless_internal:
         driver: bridge
+      ${cfg.proxiedServiceInfo.proxyNetwork}:
+        name: ${cfg.proxiedServiceInfo.proxyNetwork}
   '';
 in
 {
