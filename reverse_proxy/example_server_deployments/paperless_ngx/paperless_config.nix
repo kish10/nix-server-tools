@@ -1,5 +1,7 @@
 {pkgs ? <nixpkgs> {}, proxyNetwork, serviceLabels}:
   let
+    userHome = builtins.getEnv("HOME");
+
     borgConfig1 = import ./borgbackup_config_for_storage_box_1.nix {inherit pkgs;};
   in
   {
@@ -15,4 +17,18 @@
     borgConfigList = [
       borgConfig1
     ];
+
+    paperlessConfigPaths = {
+      env = {
+        /**
+          `paperlessSecretsEnv` should set: "PAPERLESS_SECRET_KEY"
+
+          Example `paperless-ngx_secrets.env`:
+          ```
+          PAPERLESS_SECRET_KEY=<key>
+          ```
+        */
+        paperlessSecretsEnv = "${userHome}/secrets/paperless-ngx_secrets.env";
+      };
+    };
   }

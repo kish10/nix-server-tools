@@ -18,7 +18,7 @@ in
         export BORG_ARCHIVE_PREFIX="test_borg_archive"
         ```
       */
-      borg_config_env = "${userHome}/borgbackup_config/borg.env";
+      borgConfigEnv = "${userHome}/borgbackup_config/borg.env";
 
       /**
         `borg_secrets_env` should export: "BORG_PASSPHRASE"
@@ -28,18 +28,18 @@ in
         export BORG_PASSPHRASE="test"
         ```
       */
-      borg_secrets_env = "${userHome}/secrets/borg_secrets.env";
+      borgSecretsEnv = "${userHome}/secrets/borg_secrets.env";
     };
 
     ssh = {
-      /** `known_hosts` should have: A record of the storage box server that want to ssh into. */
-      ssh_known_hosts = "${userHome}/.ssh/known_hosts";
+      /** `knownHosts` should have: A record of the storage box server that want to ssh into. */
+      sshKnownHosts = "${userHome}/.ssh/known_hosts";
 
-      /** `ssh_server_key` should be the ssh key for the storage box that want to ssh into. */
-      ssh_server_key = "${userHome}/.ssh/storage_box";
+      /** `sshServerKey` should be the ssh key for the storage box that want to ssh into. */
+      sshServerKey = "${userHome}/.ssh/storage_box";
 
       /** `ssh_server_key_passphrase` should be the passphrase to the ssh key for the server. */
-      ssh_server_key_passphrase = "${userHome}/secrets/storage_box_ssh_key_passphrase";
+      sshServerKeyPassphrase = "${userHome}/secrets/storage_box_ssh_key_passphrase";
     };
 
     /** sourceData is set by the Nix file that creates the docker-compose.yaml file for paperless-ngx. */

@@ -33,28 +33,28 @@ let
           export BORG_ARCHIVE_PREFIX="test_borg_archive"
           ```
         */
-        borg_config_env = "${userHome}/borgbackup_config/borg.env";
+        borgConfigEnv = "${userHome}/borgbackup_config/borg.env";
 
         /**
           `borg_secrets_env` should export: "BORG_PASSPHRASE"
 
-          Example `borg_secrets.env`:
+          Example `borgSecrets.env`:
           ```
           export BORG_PASSPHRASE="test"
           ```
         */
-        borg_secrets_env = "${userHome}/secrets/borg_secrets.env";
+        borgSecretsEnv = "${userHome}/secrets/borg_secrets.env";
       };
 
       ssh = {
-        /** `known_hosts` should have: A record of the storage box server that want to ssh into. */
-        ssh_known_hosts = "${userHome}/.ssh/known_hosts";
+        /** `knownHosts` should have: A record of the storage box server that want to ssh into. */
+        sshKnownHosts = "${userHome}/.ssh/known_hosts";
 
-        /** `ssh_server_key` should be the ssh key for the storage box that want to ssh into. */
-        ssh_server_key = "${userHome}/.ssh/storage_box";
+        /** `sshServerKey` should be the ssh key for the storage box that want to ssh into. */
+        sshServerKey = "${userHome}/.ssh/storage_box";
 
-        /** `ssh_server_key_passphrase` should be the passphrase to the ssh key for the server. */
-        ssh_server_key_passphrase = "${userHome}/secrets/storage_box_ssh_key_passphrase";
+        /** `sshServerKeyPassphrase` should be the passphrase to the ssh key for the server. */
+        sshServerKeyPassphrase = "${userHome}/secrets/storage_box_ssh_key_passphrase";
       };
 
       /**
@@ -407,11 +407,11 @@ let
         environment:
           BORG_SOURCE_DIRS: ${makeInDockerSourcePaths cfg.borgConfigPaths.sourceData}
         volumes:
-          - ${cfg.borgConfigPaths.env.borg_config_env}:/borg.env:ro
-          - ${cfg.borgConfigPaths.env.borg_secrets_env}:/run/secrets/borg_secrets:ro
-          - ${cfg.borgConfigPaths.ssh.ssh_known_hosts}:/root/.ssh/known_hosts:ro
-          - ${cfg.borgConfigPaths.ssh.ssh_server_key}:/root/.ssh/storage_box_private_key:ro
-          - ${cfg.borgConfigPaths.ssh.ssh_server_key_passphrase}:/run/secrets/borg_ssh_passphrase:ro
+          - ${cfg.borgConfigPaths.env.borgConfigEnv}:/borg.env:ro
+          - ${cfg.borgConfigPaths.env.borgSecretsEnv}:/run/secrets/borg_secrets:ro
+          - ${cfg.borgConfigPaths.ssh.sshKnownHosts}:/root/.ssh/known_hosts:ro
+          - ${cfg.borgConfigPaths.ssh.sshServerKey}:/root/.ssh/storage_box_private_key:ro
+          - ${cfg.borgConfigPaths.ssh.sshServerKeyPassphrase}:/run/secrets/borg_ssh_passphrase:ro
           ${makeSourceDataConfigLines {sourceData = cfg.borgConfigPaths.sourceData;}}
           ${makeAdditionalDockerBindPathsConfigLines {additionalDockerBindPaths = cfg.additionalDockerBindPaths;}}
         restart: unless-stopped
@@ -448,11 +448,11 @@ let
 
 
     docker run \
-      -v ${cfg.borgConfigPaths.env.borg_config_env}:/borg.env:ro \
-      -v ${cfg.borgConfigPaths.env.borg_secrets_env}:/run/secrets/borg_secrets:ro \
-      -v ${cfg.borgConfigPaths.ssh.ssh_known_hosts}:/root/.ssh/known_hosts:ro \
-      -v ${cfg.borgConfigPaths.ssh.ssh_server_key}:/root/.ssh/storage_box_private_key:ro \
-      -v ${cfg.borgConfigPaths.ssh.ssh_server_key_passphrase}:/run/secrets/borg_ssh_passphrase:ro \
+      -v ${cfg.borgConfigPaths.env.borgConfigEnv}:/borg.env:ro \
+      -v ${cfg.borgConfigPaths.env.borgSecretsEnv}:/run/secrets/borg_secrets:ro \
+      -v ${cfg.borgConfigPaths.ssh.sshKnownHosts}:/root/.ssh/known_hosts:ro \
+      -v ${cfg.borgConfigPaths.ssh.sshServerKey}:/root/.ssh/storage_box_private_key:ro \
+      -v ${cfg.borgConfigPaths.ssh.ssh_serverKeyPassphrase}:/run/secrets/borg_ssh_passphrase:ro \
       ${makeSourceDataConfigLines {sourceData = cfg.borgConfigPaths.sourceData; linePrefix = "-v"; linePostfix = "\\";}}
       ${makeAdditionalDockerBindPathsConfigLines {additionalDockerBindPaths = cfg.additionalDockerBindPaths; linePrefix = "-v"; linePostfix = "\\";}}
       -e BORG_SOURCE_DIRS="${makeInDockerSourcePaths cfg.borgConfigPaths.sourceData}" \

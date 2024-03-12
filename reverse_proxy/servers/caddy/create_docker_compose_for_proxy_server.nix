@@ -82,6 +82,7 @@ let
       caddy-proxy-external-network:
         driver: bridge
       ${proxyNetwork}:
+        name: ${proxyNetwork}
         driver: bridge
   '';
 in
