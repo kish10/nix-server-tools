@@ -9,23 +9,23 @@ in
   borgConfigPaths = {
     env = {
       /**
-        `borg.env` should `export`: "BORG_RSH", "BORG_REPO", optional: "BORG_ARCHIVE_PREFIX"
+        `borg.env` should have: "BORG_RSH", "BORG_REPO", optional: "BORG_ARCHIVE_PREFIX"
 
         Example `borg.env`:
         ```
-        export BORG_RSH="sshpass -f /run/secrets/borg_ssh_passphrase -P passphrase ssh -i /root/.ssh/storage_box_private_key -p <ssh port number>"
-        export BORG_REPO="ssh://user@storage_box_hostname:<ssh port number>/./<path to repo>"
-        export BORG_ARCHIVE_PREFIX="test_borg_archive"
+        BORG_RSH="sshpass -f /run/secrets/borg_ssh_passphrase -P passphrase ssh -i /root/.ssh/storage_box_private_key -p <ssh port number>"
+        BORG_REPO="ssh://user@storage_box_hostname:<ssh port number>/./<path to repo>"
+        BORG_ARCHIVE_PREFIX="test_borg_archive"
         ```
       */
       borgConfigEnv = "${userHome}/borgbackup_config/borg.env";
 
       /**
-        `borg_secrets_env` should export: "BORG_PASSPHRASE"
+        `borg_secrets_env` should have: "BORG_PASSPHRASE"
 
         Example `borg_secrets.env`:
         ```
-        export BORG_PASSPHRASE="test"
+        BORG_PASSPHRASE="test"
         ```
       */
       borgSecretsEnv = "${userHome}/secrets/borg_secrets.env";

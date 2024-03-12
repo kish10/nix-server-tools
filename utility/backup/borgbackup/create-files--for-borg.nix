@@ -24,23 +24,23 @@ let
     borgConfigPaths = {
       env = {
         /**
-          `borg.env` should `export`: "BORG_RSH", "BORG_REPO", optional: "BORG_ARCHIVE_PREFIX"
+          `borg.env` should `have`: "BORG_RSH", "BORG_REPO", optional: "BORG_ARCHIVE_PREFIX"
 
           Example `borg.env`:
           ```
-          export BORG_RSH="sshpass -f /run/secrets/borg_ssh_passphrase -P passphrase ssh -i /root/.ssh/storage_box_private_key -p <ssh port number>"
-          export BORG_REPO="ssh://user@storage_box_hostname:<ssh port number>/./<path to repo>"
-          export BORG_ARCHIVE_PREFIX="test_borg_archive"
+          BORG_RSH="sshpass -f /run/secrets/borg_ssh_passphrase -P passphrase ssh -i /root/.ssh/storage_box_private_key -p <ssh port number>"
+          BORG_REPO="ssh://user@storage_box_hostname:<ssh port number>/./<path to repo>"
+          BORG_ARCHIVE_PREFIX="test_borg_archive"
           ```
         */
         borgConfigEnv = "${userHome}/borgbackup_config/borg.env";
 
         /**
-          `borg_secrets_env` should export: "BORG_PASSPHRASE"
+          `borg_secrets_env` should have: "BORG_PASSPHRASE"
 
           Example `borgSecrets.env`:
           ```
-          export BORG_PASSPHRASE="test"
+          BORG_PASSPHRASE="test"
           ```
         */
         borgSecretsEnv = "${userHome}/secrets/borg_secrets.env";
@@ -126,12 +126,15 @@ let
     # Note:
     # - Should have: "BORG_RSH", "BORG_REPO"
     # - Optional variable: "BORG_ARCHIVE_PREFIX"
+    set -a
     source ''${BORG_ENV_FILE_PATH-/borg.env}
+    set +a
 
     # Note:
     # - Should have: "BORG_PASSPHRASE"
+    set -a
     source ''${BORG_ENV_SECRETS_FILE_PATH-/run/secrets/borg_secrets}
-
+    set +a
 
     borg list $BORG_REPO --pattern "+ $BORG_ARCHIVE_PREFIX--"
   '';
@@ -153,14 +156,22 @@ let
     pkgs.writeScript "borg_backup_prune_compact.sh" ''
       #!/bin/sh
 
+      Note:
+      - `set -a` & `set +a` is used to export the variables in the files.
+        - Reference: https://stackoverflow.com/a/43267603
+
       # Note:
       # - Should have: "BORG_RSH", "BORG_REPO"
       # - Optional variable: "BORG_ARCHIVE_PREFIX"
+      set -a
       source ''${BORG_ENV_FILE_PATH-/borg.env}
+      set +a
 
       # Note:
       # - Should have: "BORG_PASSPHRASE"
+      set -a
       source ''${BORG_ENV_SECRETS_FILE_PATH-/run/secrets/borg_secrets}
+      set +a
 
       # some helpers and error handling:
       info() { printf "\n%s %s\n\n" "$( date )" "$*" >&2; }
