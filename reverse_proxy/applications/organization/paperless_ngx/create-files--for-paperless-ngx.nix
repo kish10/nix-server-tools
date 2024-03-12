@@ -40,6 +40,13 @@ let
     paperlessConfigPaths = {
       env = {
         /**
+          Path to env file with additional paperless-ngx enviroment variables
+
+          Format of the file should be the format required for Docker ".env" files.
+        */
+        paperlessConfigEnv = "";
+
+        /**
           `paperlessSecretsEnv` should set: "PAPERLESS_SECRET_KEY"
           `paperlessSecretsEnv` can optionally set: "PAPERLESS_ADMIN_MAIL", "PAPERLESS_ADMIN_PASSWORD"
 
@@ -114,6 +121,13 @@ let
     builtins.concatStringsSep "," cfg.proxiedServiceInfo.domainNameList;
 
 
+  paperlessConfigEnvPath =
+    if cfg.paperlessConfigPaths.env.paperlessConfigEnv != "" then
+      "- ${cfg.paperlessConfigPaths.env.paperlessConfigEnv}"
+    else
+      "";
+
+
   dockerComposeFile = pkgs.writeText "docker-compose--for-paperless-ngx.yaml" ''
     # Copied from: https://github.com/paperless-ngx/paperless-ngx/blob/main/docker/compose/docker-compose.sqlite-tika.yml
 
@@ -163,6 +177,7 @@ let
           PAPERLESS_TIKA_ENDPOINT: http://${cfg.proxiedServiceInfo.serviceName}-tika:9998
         env_file:
           - ${cfg.paperlessConfigPaths.env.paperlessSecretsEnv}
+          ${paperlessConfigEnvPath}
         labels:
           ${proxiedServiceLabelConfigLines}
 
