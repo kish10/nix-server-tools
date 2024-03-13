@@ -40,7 +40,7 @@ let
     paperlessConfigPaths = {
       env = {
         /**
-          Path to env file with additional paperless-ngx enviroment variables
+          Path to env file with additional paperless-ngx environment variables
 
           Format of the file should be the format required for Docker ".env" files.
         */
@@ -80,7 +80,7 @@ let
           borgConfigPaths = borgConfig.borgConfigPaths // {sourceData = borgbackupSourceData; };
           borgConfigFinal = borgConfig // { inherit borgConfigPaths; };
 
-          generalUtility = import ../../../../utility;
+          generalUtility = import ../../../../../utility;
           borgbackupFiles = import generalUtility.backup.borgbackup {inherit pkgs; config = borgConfigFinal;};
         in
         borgbackupFiles.dockerComposeFile;
@@ -230,7 +230,7 @@ let
 in
 {
   derivation = pkgs.stdenv.mkDerivation {
-    name = "paperless_nxg";
+    name = "paperless_ngx";
     src = ./.;
     installPhase = ''
       mkdir $out

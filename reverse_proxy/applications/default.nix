@@ -6,7 +6,13 @@ let
 in
 {
   organization = {
-    paperlessngx = ./organization/paperless_ngx/create-files--for-paperless-ngx.nix;
+    bookmark_manager = {
+      shiori = ./organization/bookmark_manager/shiori/create-files--for-shiori.nix;
+    };
+
+    document_manager = {
+      paperlessngx = ./organization/document_manager/paperless_ngx/create-files--for-paperless-ngx.nix;
+    };
   };
 
   testExamples = {

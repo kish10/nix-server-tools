@@ -29,7 +29,7 @@
       # -- Get "docker-compose.yaml" for paperless-ngx
 
       config = import ./paperless_config.nix {inherit pkgs; inherit proxyNetwork; inherit serviceLabels;};
-      paperlessngxFiles = import applications.organization.paperlessngx {
+      paperlessngxFiles = import applications.organization.document_manager.paperlessngx {
         inherit pkgs;
         inherit config;
       };
