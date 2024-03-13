@@ -43,13 +43,21 @@
       ]
       ```
 
+  externalNetworks
+  : List of networks that need to be created externally (the network is created if it doesn't exist already)
+    - The `proxyNetwork` is added to the list automatically.
+
   externalVolumes
   : List of volumes that need to be created externally (the volume is created if it doesn't exist already).
     - Note:
       - It is necessary to create critical volumes that don't want to be deleted on `docker compose down` externally.
 */
 
-{pkgs ? import <nixpkgs> {}, proxiedServices, externalVolumes ? [] }:
+{
+  pkgs ? import <nixpkgs> {},
+  proxiedServices,
+  externalBridgeNetworks ? [], externalVolumes ? [], additionalComposeFiles ? []
+}:
 let
 
   # -- Get the caddy proxy `proxyNetwork`
@@ -91,16 +99,16 @@ let
 
   # -- Get utility function for copying the "docker-compose.yaml" files of the services to the output. (For reference when debugging)
 
-  getServiceComposeFileCp = service:
-  # Get `cp` command to copy the services dockerComposeFile to the result output directory
-  # Note: `$(date +"%Y-%m-%d_%H-%M-%S")__` is added to ensure that the file name is unique
-  let
-    splitedPath = builtins.split "/" "${service.dockerComposeFile}";
-    fileName = builtins.elemAt splitedPath (builtins.length splitedPath - 1);
-  in
-  ''
-    cp ${service.dockerComposeFile} $out/docker_files/for_proxied_services/$(date +"%Y-%m-%d_%H-%M-%S")__${fileName}
-  '';
+  getServiceComposeFileCp = sub_folder_name: service:
+    # Get `cp` command to copy the services dockerComposeFile to the result output directory
+    # Note: `$(date +"%Y-%m-%d_%H-%M-%S")__` is added to ensure that the file name is unique
+    let
+      splitedPath = builtins.split "/" "${service.dockerComposeFile}";
+      fileName = builtins.elemAt splitedPath (builtins.length splitedPath - 1);
+    in
+    ''
+      cp ${service.dockerComposeFile} $out/docker_files/${sub_folder_name}/$(date +"%Y-%m-%d_%H-%M-%S")__${fileName}
+    '';
 
 
   # -- Create run-docker-compose.sh script
@@ -110,6 +118,7 @@ let
     inherit dockerComposeForProxyServer;
     inherit proxiedServices;
     externalVolumes = ["caddy-proxy-data"] ++ externalVolumes;
+    externalBridgeNetworks = [proxyNetwork] ++ externalBridgeNetworks;
   };
 
 in
@@ -129,7 +138,9 @@ pkgs.stdenv.mkDerivation {
     # -- Copy docker files
     cp -r ${dockerComposeForProxyServer}/. $out/docker_files/for_proxy_server/
 
-    ${builtins.concatStringsSep "\n " (builtins.map getServiceComposeFileCp proxiedServices)}
+    ${builtins.concatStringsSep "\n " (builtins.map (p: getServiceComposeFileCp "for_proxied_services" p) proxiedServices)}
+
+    ${builtins.concatStringsSep "\n " (builtins.map (p: getServiceComposeFileCp "for_additional_services" p) additionalComposeFiles)}
 
     # -- Copy run-docker-compose.sh
     cp ${runComposeSh} $out/run-docker-compose.sh

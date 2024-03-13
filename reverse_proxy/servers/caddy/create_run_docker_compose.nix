@@ -6,9 +6,8 @@
   createRunDockerCompose :: {pkgs, path, [{dockerComposeFile = path; proxiedServiceInfo = {domainNameList = [string]; listeningPort = string; proxyNetwork = string; serviceLabels = [string]; serviceName = string; upstreamHostName = string;};}], [string], [string]} -> derivation
 */
 
-{pkgs, dockerComposeForProxyServer, proxiedServices, externalVolumes}:
+{pkgs, dockerComposeForProxyServer, proxiedServices, externalBridgeNetworks, externalVolumes}:
 let
-
   scriptArgs = ''
     ARG_BUILD="--build"
 
@@ -26,7 +25,35 @@ let
   '';
 
 
-  toEnsureExternalVolumesExist =
+  ensureProxyNetworkExists =
+    let
+      externalNetworksListString = builtins.concatStringsSep " " (map (v: "'${v}'") externalBridgeNetworks);
+    in
+    ''
+    # -- Create necessary external networks if not exists
+
+    EXTERNAL_NETWORKS=(${externalNetworksListString})
+
+    networkExists () {
+      if [ "$(docker network ls --format '{{.Name}}' | grep $1 )" ]; then
+        echo "true"
+      else
+        echo "false"
+      fi
+    }
+
+    for external_network in "''${EXTERNAL_NETWORKS[@]}"; do
+      echo "$external_network exists $(networkExists $external_network)"
+
+      if [[ "$(networkExists $external_network)" == "false" ]]; then
+        echo "Creating network $external_network"
+        docker network create --driver bridge $external_network
+      fi
+    done
+  '';
+
+
+  ensureExternalVolumesExist =
     let
       externalVolumesListString = builtins.concatStringsSep " " (map (v: "'${v}'") externalVolumes);
     in
@@ -58,6 +85,7 @@ let
       -f ${dockerComposeForProxyServer}/docker-compose--for-caddy-proxy.yaml ${if builtins.length proxiedServices > 0 then "-f" else ""} ${builtins.concatStringsSep " -f " (map (service: service.dockerComposeFile) proxiedServices)} \
       up --build
   '';
+
 in
 pkgs.writeScript "run-docker-compose.sh" ''
   #!/bin/sh
@@ -66,7 +94,10 @@ pkgs.writeScript "run-docker-compose.sh" ''
   ${scriptArgs}
 
 
-  ${toEnsureExternalVolumesExist}
+  ${ensureProxyNetworkExists}
+
+
+  ${ensureExternalVolumesExist}
 
 
   ${runCommand}
