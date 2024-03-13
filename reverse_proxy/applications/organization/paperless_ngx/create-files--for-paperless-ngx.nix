@@ -224,6 +224,8 @@ let
         driver: bridge
       ${cfg.proxiedServiceInfo.proxyNetwork}:
         name: ${cfg.proxiedServiceInfo.proxyNetwork}
+        external: true
+
   '';
 in
 {

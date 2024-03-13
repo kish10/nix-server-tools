@@ -83,7 +83,7 @@ let
         driver: bridge
       ${proxyNetwork}:
         name: ${proxyNetwork}
-        driver: bridge
+        external: true
   '';
 in
 pkgs.stdenv.mkDerivation {
