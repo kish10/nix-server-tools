@@ -65,44 +65,23 @@ let
 
   # -- docker-compose--for-borgbackup.yaml -- To be extended in the paperless-ngx docker-compose.yaml
 
-  borgbackupServicesConfig =
-    let
+  serviceName = cfg.proxiedServiceInfo.serviceName;
 
-      createComposeFilesForBorgbackup = borgConfig:
-        let
-          borgbackupSourceData = [
-            "${cfg.proxiedServiceInfo.serviceName}__paperless_data:${cfg.proxiedServiceInfo.serviceName}__paperless_data"
-            "${cfg.proxiedServiceInfo.serviceName}__paperless_media:${cfg.proxiedServiceInfo.serviceName}__paperless_media"
-            "${cfg.proxiedServiceInfo.serviceName}__paperless_export:${cfg.proxiedServiceInfo.serviceName}__paperless_export"
-            "${cfg.proxiedServiceInfo.serviceName}__paperless_consume:${cfg.proxiedServiceInfo.serviceName}__paperless_consume"
-          ];
+  reverseProxyUtility = import ../../../../reverse_proxy_utility;
+  createBorgbackupServices = reverseProxyUtility.createCommonServices.backup.borgbackup.createBorgbackupServices;
 
-          borgConfigPaths = borgConfig.borgConfigPaths // {sourceData = borgbackupSourceData; };
-          borgConfigFinal = borgConfig // { inherit borgConfigPaths; };
-
-          generalUtility = import ../../../../../utility;
-          borgbackupFiles = import generalUtility.backup.borgbackup {inherit pkgs; config = borgConfigFinal;};
-        in
-        borgbackupFiles.dockerComposeFile;
-
-      indexList = builtins.genList (ii: builtins.toString(ii)) (builtins.length cfg.borgConfigList);
-      dockerComposeFileForBorgbackupList = map createComposeFilesForBorgbackup cfg.borgConfigList;
-
-      zippedIndexAndFileList = pkgs.lib.lists.zipListsWith (ii: f: {index = ii; dockerComposeFile = f;}) indexList dockerComposeFileForBorgbackupList;
-
-      makeBorgService = {index, dockerComposeFile}:
-        ''
-          ${cfg.proxiedServiceInfo.serviceName}-borgbackup-${index}:
-              extends:
-                file: ${dockerComposeFile}
-                service: borgbackup
-              depends_on:
-                - ${cfg.proxiedServiceInfo.serviceName}
-        '';
-
-      borgServiceList = map makeBorgService zippedIndexAndFileList;
-    in
-    builtins.concatStringsSep "\n\ \ " borgServiceList;
+  borgbackupServicesConfig = import createBorgbackupServices {
+    inherit pkgs;
+    sourceServiceName = serviceName;
+    borgConfigList = cfg.borgConfigList;
+    borgbackupSourceData = [
+      "${serviceName}__paperless_data:${serviceName}__paperless_data"
+      "${serviceName}__paperless_media:${serviceName}__paperless_media"
+      "${serviceName}__paperless_export:${serviceName}__paperless_export"
+      "${serviceName}__paperless_consume:${serviceName}__paperless_consume"
+    ];
+    stringSepForServiceInYaml = "\n\ \ ";
+  };
 
 
   # -- docker-compose--for-paperless-ngx.yaml

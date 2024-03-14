@@ -46,48 +46,20 @@ let
 
   # -- docker-compose--for-borgbackup.yaml -- To be extended in the shiori docker-compose.yaml
 
-  borgbackupServicesConfig =
-    let
+  serviceName = cfg.proxiedServiceInfo.serviceName;
 
-      /** Utility function to create docker-compose.yaml file for the borgbackup service */
-      createComposeFilesForBorgbackup = borgConfig:
-        let
-          serviceName = cfg.proxiedServiceInfo.serviceName;
+  reverseProxyUtility = import ../../../../reverse_proxy_utility;
+  createBorgbackupServices = reverseProxyUtility.createCommonServices.backup.borgbackup.createBorgbackupServices;
 
-          borgbackupSourceData = [
-            "${serviceName}__shiori_data:${serviceName}__shiori_data"
-          ];
-
-          borgConfigPaths = borgConfig.borgConfigPaths // {sourceData = borgbackupSourceData; };
-          borgConfigFinal = borgConfig // { inherit borgConfigPaths; };
-
-          generalUtility = import ../../../../../utility;
-          borgbackupFiles = import generalUtility.backup.borgbackup {inherit pkgs; config = borgConfigFinal;};
-        in
-        borgbackupFiles.dockerComposeFile;
-
-
-      indexList = builtins.genList (ii: builtins.toString(ii)) (builtins.length cfg.borgConfigList);
-      dockerComposeFileForBorgbackupList = map createComposeFilesForBorgbackup cfg.borgConfigList;
-
-
-      # -- Create a docker service for each borgbackup configuration.
-
-      zippedIndexAndFileList = pkgs.lib.lists.zipListsWith (ii: f: {index = ii; dockerComposeFile = f;}) indexList dockerComposeFileForBorgbackupList;
-
-      makeBorgService = {index, dockerComposeFile}:
-        ''
-          ${cfg.proxiedServiceInfo.serviceName}-borgbackup-${index}:
-              extends:
-                file: ${dockerComposeFile}
-                service: borgbackup
-              depends_on:
-                - ${cfg.proxiedServiceInfo.serviceName}
-        '';
-
-      borgServiceList = map makeBorgService zippedIndexAndFileList;
-    in
-    builtins.concatStringsSep "\n\ \ " borgServiceList;
+  borgbackupServicesConfig = import createBorgbackupServices {
+    inherit pkgs;
+    sourceServiceName = serviceName;
+    borgConfigList = cfg.borgConfigList;
+    borgbackupSourceData = [
+      "${serviceName}__shiori_data:${serviceName}__shiori_data"
+    ];
+    stringSepForServiceInYaml = "\n\ \ ";
+  };
 
 
   # -- docker-compose--for-shiori.yaml
@@ -95,6 +67,9 @@ let
   dockerComposeForShiori =
     let
       httpAddress = builtins.head cfg.proxiedServiceInfo.domainNameList;
+
+      proxiedServiceLabelConfigLines =
+        builtins.concatStringsSep "\n\ \ \ \ " cfg.proxiedServiceInfo.serviceLabels;
 
       shioriConfigEnvPath =
         if cfg.shioriConfigPaths.env.shioriConfigEnv != "" then
@@ -108,6 +83,15 @@ let
       services:
         ${cfg.proxiedServiceInfo.serviceName}:
           image: ghcr.io/go-shiori/shiori
+          environment:
+            SHIORI_DIR: /shiori/
+            SHIORI_HTTP_ADDRESS: ${httpAddress}
+            SHIORI_HTTP_PORT: ${cfg.proxiedServiceInfo.listeningPort}
+          env_file:
+            - ${cfg.shioriConfigPaths.env.shioriSecretsEnv}
+            ${shioriConfigEnvPath}
+          labels:
+            ${proxiedServiceLabelConfigLines}
           networks:
             - ${cfg.proxiedServiceInfo.proxyNetwork}
           ports:
@@ -117,14 +101,6 @@ let
           volumes:
             - ${cfg.proxiedServiceInfo.serviceName}__shiori_data:/shiori/
             #- ${cfg.shioriConfigPaths.env.shioriSecretsEnv}:/run/secrets/shiori_secrets
-          environment:
-            SHIORI_DIR: /shiori/
-            SHIORI_HTTP_ADDRESS: ${httpAddress}
-            SHIORI_HTTP_PORT: ${cfg.proxiedServiceInfo.listeningPort}
-          env_file:
-            - ${cfg.shioriConfigPaths.env.shioriSecretsEnv}
-            ${shioriConfigEnvPath}
-
 
         # -- Configure Borg Backup
 

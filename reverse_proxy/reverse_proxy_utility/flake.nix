@@ -4,6 +4,6 @@
   };
 
   outputs = { self, nixpkgs, ... }: {
-    utilities = import ./. {inherit pkgs};
+    utilities = import ./.;
   };
 }

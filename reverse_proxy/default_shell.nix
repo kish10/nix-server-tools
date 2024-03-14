@@ -1,9 +1,9 @@
 {pkgs ? import <nixpkgs> {}}:
 let
   generalUtility = import ../utility;
-  reverseProxyUtility = import ./reverse_proxy_utility {inherit pkgs;};
+  reverseProxyUtility = import ./reverse_proxy_utility;
 
-  buildInputsUtilityDocker = pkgs.lib.attrValues reverseProxyUtility.docker.bin;
+  buildInputsUtilityDocker = pkgs.lib.attrValues (import reverseProxyUtility.shell.buildInputs.dockerUtility {inherit pkgs;}).bin;
   buildInputsUtilityEncryptionAge = pkgs.lib.attrValues (import generalUtility.encryption.age {inherit pkgs;}).bin;
 
   buildInputs = with pkgs;

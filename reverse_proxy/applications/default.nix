@@ -6,12 +6,16 @@ let
 in
 {
   organization = {
-    bookmark_manager = {
-      shiori = ./organization/bookmark_manager/shiori/create-files--for-shiori.nix;
+    bookmarkManagement = {
+      shiori = ./organization/bookmark_management/shiori/create-files--for-shiori.nix;
     };
 
-    document_manager = {
-      paperlessngx = ./organization/document_manager/paperless_ngx/create-files--for-paperless-ngx.nix;
+    documentManagement = {
+      paperlessngx = ./organization/document_management/paperless_ngx/create-files--for-paperless-ngx.nix;
+    };
+
+    projectManagement = {
+      vikunja = ./organization/project_management/vikunja/create-files--for-vikunja.nix;
     };
   };
 
