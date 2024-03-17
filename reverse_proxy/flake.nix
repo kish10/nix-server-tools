@@ -12,7 +12,7 @@
     in
     {
       applications = import ./applications;
-      utilities = import ./reverse_proxy_utility {inherit pkgs;};
+      utility = import ./reverse_proxy_utility;
       servers = import ./applications;
 
       devShells.${system}.default = import ./default_shell.nix {inherit pkgs;};

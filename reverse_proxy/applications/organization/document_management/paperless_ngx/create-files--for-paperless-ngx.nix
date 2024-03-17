@@ -46,6 +46,7 @@ let
         */
         paperlessConfigEnv = "";
 
+
         /**
           `paperlessSecretsEnv` should set: "PAPERLESS_SECRET_KEY"
           `paperlessSecretsEnv` can optionally set: "PAPERLESS_ADMIN_MAIL", "PAPERLESS_ADMIN_PASSWORD"

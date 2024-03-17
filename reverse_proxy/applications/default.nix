@@ -14,6 +14,10 @@ in
       paperlessngx = ./organization/document_management/paperless_ngx/create-files--for-paperless-ngx.nix;
     };
 
+    mediaManagement = {
+      immich = ./organization/media_management/immich/create-files--for-immich.nix;
+    };
+
     projectManagement = {
       vikunja = ./organization/project_management/vikunja/create-files--for-vikunja.nix;
     };

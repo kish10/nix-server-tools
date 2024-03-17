@@ -100,6 +100,9 @@ let
 
   # -- Dockerfile--for-vikunja
 
+  /**
+    Need to explicitly create relevant Vikunja folders to avoid "permission denied" errors when the don't exist.
+  */
   dockerFileForVikunja = pkgs.writeText "Dockerfile--for-vikunja" ''
     FROM vikunja/vikunja
 
