@@ -22,6 +22,26 @@ let
     */
     borgConfigList = [];
 
+    dockerVolumes = {
+      immichUploadLocation = {
+        driver="local";
+        name="${serviceName}__immich-upload-location";
+        mountPoint="";
+      };
+
+      pgData = {
+        driver="local";
+        name="${serviceName}__pgdata";
+        mountPoint="";
+      };
+
+      pgDataDumps = {
+        driver="local";
+        name="${serviceName}__pgdata_db_dumps";
+        mountPoint="";
+      };
+    };
+
     immichConfigPaths = {
       env = {
 
@@ -99,8 +119,10 @@ let
     inherit pkgs;
     sourceServiceName = serviceName; borgConfigList = cfg.borgConfigList;
     borgbackupSourceData = [
-      "${serviceName}__immich-upload-location:${serviceName}__immich-upload-location"
-      "${serviceName}__pgdata_db_dumps:${serviceName}__pgdata_db_dumps"
+      "${cfg.dockerVolumes.immichUploadLocation}:${cfg.dockerVolumes.immichUploadLocation}"
+      "${cfg.dockerVolumes.pgDataDumps}:${cfg.dockerVolumes.pgDataDumps}"
+      #"${serviceName}__immich-upload-location:${serviceName}__immich-upload-location"
+      #"${serviceName}__pgdata_db_dumps:${serviceName}__pgdata_db_dumps"
     ];
     stringSepForServiceInYaml = "\n\ \ ";
   };
@@ -173,7 +195,8 @@ let
           ports:
             - "${cfg.proxiedServiceInfo.listeningPort}"
           volumes:
-            - ${cfg.proxiedServiceInfo.serviceName}__immich-upload-location:/usr/src/app/upload
+            - ${cfg.dockerVolumes.immichUploadLocation}:/usr/src/app/upload
+            #- ${cfg.proxiedServiceInfo.serviceName}__immich-upload-location:/usr/src/app/upload
             - /etc/localtime:/etc/localtime:ro
           restart: always
 
@@ -201,7 +224,8 @@ let
           networks:
             - "immich-internal"
           volumes:
-            - ${cfg.proxiedServiceInfo.serviceName}__immich-upload-location:/usr/src/app/upload
+            - ${cfg.dockerVolumes.immichUploadLocation}:/usr/src/app/upload
+            #- ${cfg.proxiedServiceInfo.serviceName}__immich-upload-location:/usr/src/app/upload
             - /etc/localtime:/etc/localtime:ro
           restart: always
 

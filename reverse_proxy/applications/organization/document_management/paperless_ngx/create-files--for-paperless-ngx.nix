@@ -36,7 +36,6 @@ let
     */
     borgConfigList = [];
 
-
     paperlessConfigPaths = {
       env = {
         /**
@@ -59,16 +58,45 @@ let
         paperlessSecretsEnv = "${userHome}/secrets/paperless-ngx_secrets.env";
       };
     };
+
+    dockerVolumes = {
+      paperlessData = {
+        driver="local";
+        name="${serviceName}__paperless_data";
+        mountPoint="";
+      };
+
+      paperlessMedia = {
+        driver="local";
+        name="${serviceName}__paperless_media";
+        mountPoint="";
+      };
+
+      paperlessExport = {
+        driver="local";
+        name="${serviceName}__paperless_export";
+        mountPoint="";
+      };
+
+      paperlessConsume = {
+        driver="local";
+        name="${serviceName}__paperless_consume";
+        mountPoint="";
+      };
+    };
   };
 
   cfg = options // config;
+
+
+  # -- Common
+  reverseProxyUtility = import ../../../../reverse_proxy_utility;
 
 
   # -- docker-compose--for-borgbackup.yaml -- To be extended in the paperless-ngx docker-compose.yaml
 
   serviceName = cfg.proxiedServiceInfo.serviceName;
 
-  reverseProxyUtility = import ../../../../reverse_proxy_utility;
   createBorgbackupServices = reverseProxyUtility.createCommonServices.backup.borgbackup.createBorgbackupServices;
 
   borgbackupServicesConfig = import createBorgbackupServices {
@@ -76,10 +104,10 @@ let
     sourceServiceName = serviceName;
     borgConfigList = cfg.borgConfigList;
     borgbackupSourceData = [
-      "${serviceName}__paperless_data:${serviceName}__paperless_data"
-      "${serviceName}__paperless_media:${serviceName}__paperless_media"
-      "${serviceName}__paperless_export:${serviceName}__paperless_export"
-      "${serviceName}__paperless_consume:${serviceName}__paperless_consume"
+      "${cfg.dockerVolumes.paperlessData.name}:${cfg.dockerVolumes.paperlessData.name}"
+      "${cfg.dockerVolumes.paperlessMedia.name}:${cfg.dockerVolumes.paperlessMedia.name}"
+      "${cfg.dockerVolumes.paperlessExport.name}:${cfg.dockerVolumes.paperlessExport.name}"
+      "${cfg.dockerVolumes.paperlessConsume.name}:${cfg.dockerVolumes.paperlessConsume.name}"
     ];
     stringSepForServiceInYaml = "\n\ \ ";
   };
@@ -107,6 +135,8 @@ let
     else
       "";
 
+  volumeSpecificationUtility = import reverseProxyUtility.docker.dockerComposeSnippets.volumeSpecification {inherit pkgs;};
+  specifyVolume = volumeSpecificationUtility.specifyVolume;
 
   dockerComposeFile = pkgs.writeText "docker-compose--for-paperless-ngx.yaml" ''
     # Copied from: https://github.com/paperless-ngx/paperless-ngx/blob/main/docker/compose/docker-compose.sqlite-tika.yml
@@ -137,10 +167,10 @@ let
         ports:
           - "${cfg.proxiedServiceInfo.listeningPort}"
         volumes:
-          - ${cfg.proxiedServiceInfo.serviceName}__paperless_data:/usr/src/paperless/data
-          - ${cfg.proxiedServiceInfo.serviceName}__paperless_media:/usr/src/paperless/media
-          - ${cfg.proxiedServiceInfo.serviceName}__paperless_export:/usr/src/paperless/export
-          - ${cfg.proxiedServiceInfo.serviceName}__paperless_consume:/usr/src/paperless/consume
+          - ${cfg.dockerVolumes.paperlessData.name}:/usr/src/paperless/data
+          - ${cfg.dockerVolumes.paperlessMedia.name}:/usr/src/paperless/media
+          - ${cfg.dockerVolumes.paperlessExport.name}:/usr/src/paperless/export
+          - ${cfg.dockerVolumes.paperlessConsume.name}:/usr/src/paperless/consume
 
         environment:
           PAPERLESS_CSRF_TRUSTED_ORIGINS: ${paperlessUrlCsrfEnv}
@@ -192,10 +222,10 @@ let
 
 
     volumes:
-      ${cfg.proxiedServiceInfo.serviceName}__paperless_data:
-      ${cfg.proxiedServiceInfo.serviceName}__paperless_media:
-      ${cfg.proxiedServiceInfo.serviceName}__paperless_export:
-      ${cfg.proxiedServiceInfo.serviceName}__paperless_consume:
+    ${specifyVolume (cfg.dockerVolumes.paperlessData)}
+    ${specifyVolume (cfg.dockerVolumes.paperlessExport)}
+    ${specifyVolume (cfg.dockerVolumes.paperlessMedia)}
+    ${specifyVolume (cfg.dockerVolumes.paperlessConsume)}
       ${cfg.proxiedServiceInfo.serviceName}__paperless_redisdata:
       ${cfg.proxiedServiceInfo.serviceName}__paperless_borg_cache:
 

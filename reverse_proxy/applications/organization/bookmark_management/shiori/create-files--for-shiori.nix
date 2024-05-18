@@ -1,3 +1,11 @@
+/**
+  Creates Docker services for Shiori Bookmark manager.
+
+  See: [Github - Shiori](https://github.com/go-shiori/shiori) for details.
+
+  For the initial login use: username `shiori`, password `gopher`.
+  - Reference: https://github.com/go-shiori/shiori/blob/master/docs/Usage.md
+*/
 {
   pkgs ? import <nixpkgs>{},
   config ? {}
@@ -5,7 +13,7 @@
 let
   userHome = builtins.getEnv("HOME");
 
-  options = {
+  options = rec {
     proxiedServiceInfo = {
       serviceName = "shiori";
       domainNameList = ["shiori.not_exist.com"];
@@ -21,6 +29,14 @@ let
       Note: `borgConfigPaths.sourceData` will be set below.
     */
     borgConfigList = [];
+
+    dockerVolumes = {
+      shioriData = {
+        driver="local";
+        name="${proxiedServiceInfo.serviceName}__shiori_data";
+        mountPoint="";
+      };
+    };
 
     shioriConfigPaths = {
       env = {
@@ -56,7 +72,7 @@ let
     sourceServiceName = serviceName;
     borgConfigList = cfg.borgConfigList;
     borgbackupSourceData = [
-      "${serviceName}__shiori_data:${serviceName}__shiori_data"
+      "${cfg.dockerVolumes.shioriData.name}:${cfg.dockerVolumes.shioriData.name}"
     ];
     stringSepForServiceInYaml = "\n\ \ ";
   };
@@ -64,9 +80,13 @@ let
 
   # -- docker-compose--for-shiori.yaml
 
+  volumeSpecificationUtility = import reverseProxyUtility.docker.dockerComposeSnippets.volumeSpecification {inherit pkgs;};
+  specifyVolume = volumeSpecificationUtility.specifyVolume;
+
+
   dockerComposeForShiori =
     let
-      httpAddress = builtins.head cfg.proxiedServiceInfo.domainNameList;
+      # httpAddress = builtins.head cfg.proxiedServiceInfo.domainNameList;
 
       proxiedServiceLabelConfigLines =
         builtins.concatStringsSep "\n\ \ \ \ " cfg.proxiedServiceInfo.serviceLabels;
@@ -85,7 +105,7 @@ let
           image: ghcr.io/go-shiori/shiori
           environment:
             SHIORI_DIR: /shiori/
-            SHIORI_HTTP_ADDRESS: ${httpAddress}
+            #SHIORI_HTTP_ADDRESS: ${httpAddress}
             SHIORI_HTTP_PORT: ${cfg.proxiedServiceInfo.listeningPort}
           env_file:
             - ${cfg.shioriConfigPaths.env.shioriSecretsEnv}
@@ -95,12 +115,12 @@ let
           networks:
             - ${cfg.proxiedServiceInfo.proxyNetwork}
           ports:
-            - "${cfg.proxiedServiceInfo.listeningPort}"
+            - ${cfg.proxiedServiceInfo.listeningPort}
           restart:
             unless-stopped
           volumes:
-            - ${cfg.proxiedServiceInfo.serviceName}__shiori_data:/shiori/
-            #- ${cfg.shioriConfigPaths.env.shioriSecretsEnv}:/run/secrets/shiori_secrets
+            - ${cfg.dockerVolumes.shioriData.name}:/shiori/
+            - ${cfg.shioriConfigPaths.env.shioriSecretsEnv}:/run/secrets/shiori_secrets
 
         # -- Configure Borg Backup
 
@@ -108,7 +128,7 @@ let
 
 
       volumes:
-        ${cfg.proxiedServiceInfo.serviceName}__shiori_data:
+      ${specifyVolume cfg.dockerVolumes.shioriData}
 
       networks:
         ${cfg.proxiedServiceInfo.proxyNetwork}:
