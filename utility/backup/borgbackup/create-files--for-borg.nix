@@ -156,9 +156,9 @@ let
     pkgs.writeScript "borg_backup_prune_compact.sh" ''
       #!/bin/sh
 
-      Note:
-      - `set -a` & `set +a` is used to export the variables in the files.
-        - Reference: https://stackoverflow.com/a/43267603
+      #Note:
+      #- `set -a` & `set +a` is used to export the variables in the files.
+      #  - Reference: https://stackoverflow.com/a/43267603
 
       # Note:
       # - Should have: "BORG_RSH", "BORG_REPO"

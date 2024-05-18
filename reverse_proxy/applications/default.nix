@@ -6,7 +6,21 @@ let
 in
 {
   organization = {
-    paperlessngx = ./organization/paperless_ngx/create-files--for-paperless-ngx.nix;
+    bookmarkManagement = {
+      shiori = ./organization/bookmark_management/shiori/create-files--for-shiori.nix;
+    };
+
+    documentManagement = {
+      paperlessngx = ./organization/document_management/paperless_ngx/create-files--for-paperless-ngx.nix;
+    };
+
+    mediaManagement = {
+      immich = ./organization/media_management/immich/create-files--for-immich.nix;
+    };
+
+    projectManagement = {
+      vikunja = ./organization/project_management/vikunja/create-files--for-vikunja.nix;
+    };
   };
 
   testExamples = {

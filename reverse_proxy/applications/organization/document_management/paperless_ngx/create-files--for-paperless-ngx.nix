@@ -36,15 +36,15 @@ let
     */
     borgConfigList = [];
 
-
     paperlessConfigPaths = {
       env = {
         /**
-          Path to env file with additional paperless-ngx enviroment variables
+          Path to env file with additional paperless-ngx environment variables
 
           Format of the file should be the format required for Docker ".env" files.
         */
         paperlessConfigEnv = "";
+
 
         /**
           `paperlessSecretsEnv` should set: "PAPERLESS_SECRET_KEY"
@@ -58,51 +58,59 @@ let
         paperlessSecretsEnv = "${userHome}/secrets/paperless-ngx_secrets.env";
       };
     };
+
+    dockerVolumes = {
+      paperlessData = {
+        driver="local";
+        name="${serviceName}__paperless_data";
+        mountPoint="";
+      };
+
+      paperlessMedia = {
+        driver="local";
+        name="${serviceName}__paperless_media";
+        mountPoint="";
+      };
+
+      paperlessExport = {
+        driver="local";
+        name="${serviceName}__paperless_export";
+        mountPoint="";
+      };
+
+      paperlessConsume = {
+        driver="local";
+        name="${serviceName}__paperless_consume";
+        mountPoint="";
+      };
+    };
   };
 
   cfg = options // config;
 
 
+  # -- Common
+  reverseProxyUtility = import ../../../../reverse_proxy_utility;
+
+
   # -- docker-compose--for-borgbackup.yaml -- To be extended in the paperless-ngx docker-compose.yaml
 
-  borgbackupServicesConfig =
-    let
+  serviceName = cfg.proxiedServiceInfo.serviceName;
 
-      createComposeFilesForBorgbackup = borgConfig:
-        let
-          borgbackupSourceData = [
-            "${cfg.proxiedServiceInfo.serviceName}__paperless_data:${cfg.proxiedServiceInfo.serviceName}__paperless_data"
-            "${cfg.proxiedServiceInfo.serviceName}__paperless_media:${cfg.proxiedServiceInfo.serviceName}__paperless_media"
-            "${cfg.proxiedServiceInfo.serviceName}__paperless_export:${cfg.proxiedServiceInfo.serviceName}__paperless_export"
-            "${cfg.proxiedServiceInfo.serviceName}__paperless_consume:${cfg.proxiedServiceInfo.serviceName}__paperless_consume"
-          ];
+  createBorgbackupServices = reverseProxyUtility.createCommonServices.backup.borgbackup.createBorgbackupServices;
 
-          borgConfigPaths = borgConfig.borgConfigPaths // {sourceData = borgbackupSourceData; };
-          borgConfigFinal = borgConfig // { inherit borgConfigPaths; };
-
-          generalUtility = import ../../../../utility;
-          borgbackupFiles = import generalUtility.backup.borgbackup {inherit pkgs; config = borgConfigFinal;};
-        in
-        borgbackupFiles.dockerComposeFile;
-
-      indexList = builtins.genList (ii: builtins.toString(ii)) (builtins.length cfg.borgConfigList);
-      dockerComposeFileForBorgbackupList = map createComposeFilesForBorgbackup cfg.borgConfigList;
-
-      zippedIndexAndFileList = pkgs.lib.lists.zipListsWith (ii: f: {index = ii; dockerComposeFile = f;}) indexList dockerComposeFileForBorgbackupList;
-
-      makeBorgService = {index, dockerComposeFile}:
-        ''
-          ${cfg.proxiedServiceInfo.serviceName}-borgbackup-${index}:
-              extends:
-                file: ${dockerComposeFile}
-                service: borgbackup
-              depends_on:
-                - ${cfg.proxiedServiceInfo.serviceName}
-        '';
-
-      borgServiceList = map makeBorgService zippedIndexAndFileList;
-    in
-    builtins.concatStringsSep "\n\ \ " borgServiceList;
+  borgbackupServicesConfig = import createBorgbackupServices {
+    inherit pkgs;
+    sourceServiceName = serviceName;
+    borgConfigList = cfg.borgConfigList;
+    borgbackupSourceData = [
+      "${cfg.dockerVolumes.paperlessData.name}:${cfg.dockerVolumes.paperlessData.name}"
+      "${cfg.dockerVolumes.paperlessMedia.name}:${cfg.dockerVolumes.paperlessMedia.name}"
+      "${cfg.dockerVolumes.paperlessExport.name}:${cfg.dockerVolumes.paperlessExport.name}"
+      "${cfg.dockerVolumes.paperlessConsume.name}:${cfg.dockerVolumes.paperlessConsume.name}"
+    ];
+    stringSepForServiceInYaml = "\n\ \ ";
+  };
 
 
   # -- docker-compose--for-paperless-ngx.yaml
@@ -127,6 +135,8 @@ let
     else
       "";
 
+  volumeSpecificationUtility = import reverseProxyUtility.docker.dockerComposeSnippets.volumeSpecification {inherit pkgs;};
+  specifyVolume = volumeSpecificationUtility.specifyVolume;
 
   dockerComposeFile = pkgs.writeText "docker-compose--for-paperless-ngx.yaml" ''
     # Copied from: https://github.com/paperless-ngx/paperless-ngx/blob/main/docker/compose/docker-compose.sqlite-tika.yml
@@ -157,10 +167,10 @@ let
         ports:
           - "${cfg.proxiedServiceInfo.listeningPort}"
         volumes:
-          - ${cfg.proxiedServiceInfo.serviceName}__paperless_data:/usr/src/paperless/data
-          - ${cfg.proxiedServiceInfo.serviceName}__paperless_media:/usr/src/paperless/media
-          - ${cfg.proxiedServiceInfo.serviceName}__paperless_export:/usr/src/paperless/export
-          - ${cfg.proxiedServiceInfo.serviceName}__paperless_consume:/usr/src/paperless/consume
+          - ${cfg.dockerVolumes.paperlessData.name}:/usr/src/paperless/data
+          - ${cfg.dockerVolumes.paperlessMedia.name}:/usr/src/paperless/media
+          - ${cfg.dockerVolumes.paperlessExport.name}:/usr/src/paperless/export
+          - ${cfg.dockerVolumes.paperlessConsume.name}:/usr/src/paperless/consume
 
         environment:
           PAPERLESS_CSRF_TRUSTED_ORIGINS: ${paperlessUrlCsrfEnv}
@@ -212,10 +222,10 @@ let
 
 
     volumes:
-      ${cfg.proxiedServiceInfo.serviceName}__paperless_data:
-      ${cfg.proxiedServiceInfo.serviceName}__paperless_media:
-      ${cfg.proxiedServiceInfo.serviceName}__paperless_export:
-      ${cfg.proxiedServiceInfo.serviceName}__paperless_consume:
+    ${specifyVolume (cfg.dockerVolumes.paperlessData)}
+    ${specifyVolume (cfg.dockerVolumes.paperlessExport)}
+    ${specifyVolume (cfg.dockerVolumes.paperlessMedia)}
+    ${specifyVolume (cfg.dockerVolumes.paperlessConsume)}
       ${cfg.proxiedServiceInfo.serviceName}__paperless_redisdata:
       ${cfg.proxiedServiceInfo.serviceName}__paperless_borg_cache:
 
@@ -230,7 +240,7 @@ let
 in
 {
   derivation = pkgs.stdenv.mkDerivation {
-    name = "paperless_nxg";
+    name = "paperless_ngx";
     src = ./.;
     installPhase = ''
       mkdir $out
