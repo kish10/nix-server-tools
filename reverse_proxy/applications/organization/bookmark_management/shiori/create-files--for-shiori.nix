@@ -105,7 +105,7 @@ let
           image: ghcr.io/go-shiori/shiori
           environment:
             SHIORI_DIR: /shiori/
-            #SHIORI_HTTP_ADDRESS: ${httpAddress}
+            #SHIORI_HTTP_ADDRESS: ''${httpAddress}
             SHIORI_HTTP_PORT: ${cfg.proxiedServiceInfo.listeningPort}
           env_file:
             - ${cfg.shioriConfigPaths.env.shioriSecretsEnv}
