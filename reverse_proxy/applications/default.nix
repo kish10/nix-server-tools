@@ -10,6 +10,10 @@ in
       shiori = ./organization/bookmark_management/shiori/create-files--for-shiori.nix;
     };
 
+    dataManagement = {
+      nocodb = ./organization/data_management/nocodb/create-files--for-nocodb.nix;
+    };
+
     documentManagement = {
       paperlessngx = ./organization/document_management/paperless_ngx/create-files--for-paperless-ngx.nix;
     };
