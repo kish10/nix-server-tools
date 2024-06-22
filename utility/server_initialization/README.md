@@ -6,7 +6,7 @@ Create a `cloud-init.yaml` file by calling `nix-build cloud_config_creation_util
 
 Note:
 - The `cloud_config_creation_utility.nix` file is not perfect, and requires manual intervention for a proper setup.
-
+- For quick use can customize the output file by copying the `cloud_config_creation_utility.nix` & filling in the optional variables such as `users.sshAuthorized` keys.
 
 ## Using the `cloud-init.yaml` file to setup a server.
 
@@ -38,4 +38,5 @@ Once the server is created:
 
 ## References
 
+- Documentation: [Cloud-init documentation](https://cloudinit.readthedocs.io/en/latest/index.html)
 - Tutorial: [Basic Cloud Config | Hetzner Community](https://community.hetzner.com/tutorials/basic-cloud-config)
