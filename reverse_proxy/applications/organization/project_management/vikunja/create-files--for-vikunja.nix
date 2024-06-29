@@ -22,6 +22,20 @@ let
     */
     borgConfigList = [];
 
+    dockerVolumes = {
+      vikunjaFiles = {
+        driver="local";
+        name="${proxiedServiceInfo.serviceName}__vikunja_files";
+        mountPoint="";
+      };
+
+     vikunjaDB = {
+        driver="local";
+        name="${proxiedServiceInfo.serviceName}__vikunja_db";
+        mountPoint="";
+      };
+    };
+
     vikunjaConfigPaths = {
       env = {
 
@@ -36,9 +50,9 @@ let
         /**
           `vikunjaSecretsEnv` for secrets such as: "VIKUNJA_SERVICE_JWTSECRET"
 
-          Example `shiori_secrets.env`:
+          Example `vikunja_secrets.env`:
           ```
-          SHIORI_HTTP_SECRET_KEY_FILE="<key>"
+          VIKUNJA_SERVICE_JWTSECRET="<key>"
           ```
         */
         vikunjaSecretsEnv = ""; #"${userHome}/secrets/vikunja_secrets.env";
@@ -116,6 +130,9 @@ let
 
   # -- docker-compose--for-vikunja.yaml
 
+  volumeSpecificationUtility = import reverseProxyUtility.docker.dockerComposeSnippets.volumeSpecification {inherit pkgs;};
+  specifyVolume = volumeSpecificationUtility.specifyVolume;
+
   dockerComposeFile =
     let
       domainName = (builtins.head cfg.proxiedServiceInfo.domainNameList);
@@ -181,8 +198,9 @@ let
 
 
       volumes:
-        ${cfg.proxiedServiceInfo.serviceName}__vikunja_files:
-        ${cfg.proxiedServiceInfo.serviceName}__vikunja_db:
+      ${specifyVolume cfg.dockerVolumes.vikunjaFiles}
+      ${specifyVolume cfg.dockerVolumes.vikunjaDB}
+
 
       networks:
         ${cfg.proxiedServiceInfo.proxyNetwork}:
