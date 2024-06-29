@@ -5,7 +5,7 @@
 let
   userHome = builtins.getEnv("HOME");
 
-  options = {
+  options = rec {
     proxiedServiceInfo = {
       serviceName = "vikunja";
       domainNameList = ["vikunja.not_exist.com"];
