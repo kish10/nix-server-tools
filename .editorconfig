@@ -1,6 +1,9 @@
 # Reference:
 # - http://EditorConfig.org
 # - https://github.com/NixOS/nixpkgs/blob/master/.editorconfig
+# - https://github.com/rust-lang/rust/blob/master/.editorconfig
+# - https://stackoverflow.com/a/64999517 (Stackoverflow Answer explaining why indenting yaml files to 2 spaces is a good option)
+
 
 # Top-most EditorConfig file
 root = true
@@ -30,26 +33,26 @@ insert_final_newline = false
 
 # -- start: .editorconfig for file indents
 
-# Match ex/exs/json/lockfiles/markdown/nix/perl/python/ruby/shell/docbook/yaml/yml files, set indent to spaces
-[*.{ex,exs,heex,js,json,lock,md,nix,pl,pm,py,rb,sh,xml,yaml,yml}]
+# Match ex/exs/Gemfile/heex/javascript/json/lockfiles/markdown/nix/perl/python/ruby/rust/shell/docbook/yaml/yml files, set indent to spaces
+[*.{ex,exs,Gemfile,heex,js,json,lock,md,nix,pl,pm,py,rb,rs,sh,xml,yaml,yml}]
 indent_style = space
+
+# Match Makefile
+[Makefile]
+indent_style = tab
+
 
 # Match docbook files, set indent width of one
 [*.xml]
 indent_size = 1
 
-# Match ex/exs/heex/js/json/lockfiles/markdown/nix/ruby files, set indent width of two
-[*.{ex,exs,heex,js,json,lock,md,nix,rb}]
+# Match ex/exs/Gemfile/heex/javascript/json/lockfiles/markdown/nix/ruby/yaml/yml files, set indent width of two
+[*.{ex,exs,Gemfile,heex,js,json,lock,md,nix,rb,yaml,yml}]
 indent_size = 2
 
-# Match perl/python/shell/yaml/yml files, set indent width of four
-[*.{pl,pm,py,sh,yaml,yml}]
+# Match perl/python/rust/shell files, set indent width of four
+[*.{pl,pm,py,rs,sh}]
 indent_size = 4
-
-# Match gemfiles, set indent to spaces with width of two
-[Gemfile]
-indent_size = 2
-indent_style = space
 
 # -- end: .editorconfig for file indents
 
@@ -79,6 +82,7 @@ indent_size = unset
 [*.md]
 trim_trailing_whitespace = true
 
+
 # binaries
 [*.nib]
 end_of_line = unset
@@ -89,4 +93,11 @@ charset = unset
 [eggs.nix]
 trim_trailing_whitespace = unset
 
-# -- start: .editorconfig for files that requires specific configuration for newlines & line endings.
+
+# Individual language requirements
+
+# Rust - Style guide sets default line width of 100
+[*.rs]
+max_line_length = 100
+
+# -- end: .editorconfig for files that requires specific configuration for newlines & line endings.
