@@ -33,8 +33,8 @@ insert_final_newline = false
 
 # -- start: .editorconfig for file indents
 
-# Match ex/exs/Gemfile/heex/javascript/json/lockfiles/markdown/nix/perl/python/ruby/rust/shell/docbook/yaml/yml files, set indent to spaces
-[*.{ex,exs,Gemfile,heex,js,json,lock,md,nix,pl,pm,py,rb,rs,sh,xml,yaml,yml}]
+# Match ex/exs/Gemfile/heex/javascript/json/lockfiles/markdown/nix/perl/python/ruby/rust/shell/toml/docbook/yaml/yml files, set indent to spaces
+[*.{ex,exs,Gemfile,heex,js,json,lock,md,nix,pl,pm,py,rb,rs,sh,toml,xml,yaml,yml}]
 indent_style = space
 
 # Match Makefile
@@ -46,8 +46,8 @@ indent_style = tab
 [*.xml]
 indent_size = 1
 
-# Match ex/exs/Gemfile/heex/javascript/json/lockfiles/markdown/nix/ruby/yaml/yml files, set indent width of two
-[*.{ex,exs,Gemfile,heex,js,json,lock,md,nix,rb,yaml,yml}]
+# Match ex/exs/Gemfile/heex/javascript/json/lockfiles/markdown/nix/ruby/toml/yaml/yml files, set indent width of two
+[*.{ex,exs,Gemfile,heex,js,json,lock,md,nix,rb,toml,yaml,yml}]
 indent_size = 2
 
 # Match perl/python/rust/shell files, set indent width of four
