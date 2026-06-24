@@ -29,11 +29,11 @@ Once the server is created:
     - Have to manually run this script instead of through `runcmd`, since for some reason we get locked out of the server when this script is ran by `runcmd`.
 4. Call `sudo /initial_setup/install_age.sh` to install `age` (a usefull file encryption tool).
 5. Install rootless docker:
-  - Copy the file `/initial_setup/install_docker.sh` to the home directory, with `cp /initial_setup/install_docker.sh ~/install_docker.sh`.
-  - Change the ownership of the file in the home directory with `chown <username>:<username> ~/install_docker.sh && chmod 700 ~/install_docker.sh`.
-    - This is critical since can't install rootless docker under the `root` user, so can't use `sudo install_docker.sh`.
-  - Run the file `./install_docker.sh`.
-  - Delete the `~/install_docker.sh` file.
+  - Copy the file `/initial_setup/install_docker_rootless_from_non-root.sh` to the home directory, with `cp /initial_setup/install_docker_rootless_from_non-root.sh ~/install_docker_rootless_from_non-root.sh`.
+  - Change the ownership of the file in the home directory with `chown <username>:<username> ~/install_docker_rootless_from_non-root.sh && chmod 700 ~/install_docker_rootless_from_non-root.sh`.
+    - This is critical since can't install rootless docker under the `root` user, so can't use `sudo install_docker_rootless_from_non-root.sh`.
+  - Run the file `./install_docker_rootless_from_non-root.sh`.
+  - Delete the `~/install_docker_rootless_from_non-root.sh` file.
 5. Call `sudo /initial_setup/install_nix.sh` to install `nix`.
 
 ## References

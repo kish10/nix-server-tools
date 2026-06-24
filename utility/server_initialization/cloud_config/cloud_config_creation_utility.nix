@@ -35,8 +35,8 @@ let
         runType = "manual";
       }
       {
-        sourceFile = ../scripts/install_docker.sh;
-        destination = "/initial_setup/install_docker.sh";
+        sourceFile = ../scripts/install_docker_rootless_from_non-root.sh;
+        destination = "/initial_setup/install_docker_rootless_from_non-root.sh";
         owner = "root:root";
         runType = "manual";
       }
