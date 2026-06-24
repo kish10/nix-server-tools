@@ -20,6 +20,13 @@ sed -i '$a\
 # -- Neovim configuration\
 \
 export PATH="$PATH:/opt/nvim-linux64/bin"\
-alias vim="neovim"' ~/.bashrc
+alias vim="nvim"' ~/.bashrc
 
 source ~/.bashrc
+
+
+# -- -- Configure Neovim
+
+mkdir ~/.config/nvim
+
+echo "set number" > ~/.config/nvim/init.vim
